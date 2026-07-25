@@ -33,7 +33,18 @@ function Home({ onSelect }) {
 
 function App() {
   const [activeId, setActiveId] = useState(null)
+  const [query, setQuery] = useState('')
   const active = concepts.find((c) => c.id === activeId)
+
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? concepts.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.blurb.toLowerCase().includes(q) ||
+          c.tag.toLowerCase().includes(q)
+      )
+    : concepts
 
   return (
     <div className="app">
@@ -41,13 +52,20 @@ function App() {
         <div className="brand">
           <span>Explained</span> /systems
         </div>
+        <input
+          className="sidebar-search"
+          type="text"
+          placeholder="Search concepts…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
         <button
           className={`nav-item ${!activeId ? 'active' : ''}`}
           onClick={() => setActiveId(null)}
         >
           Home
         </button>
-        {concepts.map((c) => (
+        {filtered.map((c) => (
           <button
             key={c.id}
             className={`nav-item ${activeId === c.id ? 'active' : ''}`}
@@ -56,6 +74,7 @@ function App() {
             {c.title}
           </button>
         ))}
+        {q && filtered.length === 0 && <div className="sidebar-empty">No matches</div>}
       </nav>
       <main className="main">
         {active ? (
