@@ -57,15 +57,27 @@ function Home({ onSelect }) {
   )
 }
 
+const MOBILE_BREAKPOINT = 768
+
 function App() {
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
   const [soundOn, setSoundOn] = useState(isSoundEnabled)
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth > MOBILE_BREAKPOINT
+  )
   const active = concepts.find((c) => c.id === activeId)
 
   const toggleSound = () => {
     setSoundEnabled(!soundOn)
     setSoundOn(!soundOn)
+  }
+
+  // On mobile the sidebar is a drawer over the content, so picking a concept
+  // should close it; on desktop it's a permanent column, so leave it open.
+  const selectConcept = (id) => {
+    setActiveId(id)
+    if (window.innerWidth <= MOBILE_BREAKPOINT) setSidebarOpen(false)
   }
 
   const q = query.trim().toLowerCase()
@@ -80,17 +92,28 @@ function App() {
 
   return (
     <div className="app">
-      <nav className="sidebar">
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+      <nav className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="brand">
           <span>Explained</span> /systems
-          <button
-            className="sound-toggle"
-            onClick={toggleSound}
-            title={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
-            aria-label={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
-          >
-            {soundOn ? '🔊' : '🔇'}
-          </button>
+          <div className="brand-actions">
+            <button
+              className="icon-btn"
+              onClick={toggleSound}
+              title={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
+              aria-label={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
+            >
+              {soundOn ? '🔊' : '🔇'}
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => setSidebarOpen(false)}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+            >
+              ‹
+            </button>
+          </div>
         </div>
         <input
           className="sidebar-search"
@@ -101,7 +124,7 @@ function App() {
         />
         <button
           className={`nav-item ${!activeId ? 'active' : ''}`}
-          onClick={() => setActiveId(null)}
+          onClick={() => selectConcept(null)}
         >
           Home
         </button>
@@ -109,7 +132,7 @@ function App() {
           <button
             key={c.id}
             className={`nav-item ${activeId === c.id ? 'active' : ''}`}
-            onClick={() => setActiveId(c.id)}
+            onClick={() => selectConcept(c.id)}
           >
             {c.title}
           </button>
@@ -117,6 +140,16 @@ function App() {
         {q && filtered.length === 0 && <div className="sidebar-empty">No matches</div>}
       </nav>
       <main className="main">
+        {!sidebarOpen && (
+          <button
+            className="sidebar-open-btn"
+            onClick={() => setSidebarOpen(true)}
+            title="Open sidebar"
+            aria-label="Open sidebar"
+          >
+            ☰
+          </button>
+        )}
         {active ? (
           <motion.div
             key={active.id}
