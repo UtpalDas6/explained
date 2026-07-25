@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playClick, playSuccess, playPop, playWhoosh } from '../lib/sound.js'
 
 const ROOT_KEYS = [30, 60]
 const CHILDREN = [
@@ -23,6 +24,8 @@ function BTreeDemo() {
     const child = childIndex(key)
     const found = CHILDREN[child].keys.includes(key)
     setPath({ child, found, key })
+    if (found) playSuccess()
+    else playClick()
   }
 
   return (
@@ -94,14 +97,17 @@ function LsmTreeDemo() {
     if (next.length >= 3) {
       setSstables((s) => [[...next].sort(), ...s])
       setMemtable([])
+      playPop()
     } else {
       setMemtable(next)
+      playClick()
     }
     setInput('')
   }
 
   const compact = () => {
     if (sstables.length <= 1) return
+    playWhoosh()
     const merged = [...new Set(sstables.flat())].sort()
     setSstables([merged])
   }
@@ -152,8 +158,8 @@ export default function DatabaseIndexing() {
   return (
     <div className="panel">
       <div className="controls">
-        <button className={`btn ${tab === 'btree' ? 'primary' : ''}`} onClick={() => setTab('btree')}>B-Tree (search path)</button>
-        <button className={`btn ${tab === 'lsm' ? 'primary' : ''}`} onClick={() => setTab('lsm')}>LSM-Tree (write path)</button>
+        <button className={`btn ${tab === 'btree' ? 'primary' : ''}`} onClick={() => { playClick(); setTab('btree') }}>B-Tree (search path)</button>
+        <button className={`btn ${tab === 'lsm' ? 'primary' : ''}`} onClick={() => { playClick(); setTab('lsm') }}>LSM-Tree (write path)</button>
       </div>
       {tab === 'btree' ? <BTreeDemo /> : <LsmTreeDemo />}
     </div>

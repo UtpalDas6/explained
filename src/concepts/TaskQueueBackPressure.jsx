@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playError, playSuccess } from '../lib/sound.js'
 
 const CAPACITY = 8
 const WORKER_COUNT = 3
@@ -97,6 +98,7 @@ export default function TaskQueueBackPressure() {
           workersRef.current[idx] = false
           setWorkers([...workersRef.current])
           setCompleted((c) => c + 1)
+          playSuccess()
           setStatus(`Worker ${idx} finished a task.`)
           tryDispatch()
         }, duration)
@@ -108,6 +110,7 @@ export default function TaskQueueBackPressure() {
   const submitTask = () => {
     if (depthRef.current >= CAPACITY) {
       setRejected((r) => r + 1)
+      playError()
       setStatus(`Queue full (${CAPACITY}/${CAPACITY}) — task REJECTED. This is back pressure protecting the workers from an unbounded backlog.`)
       return
     }

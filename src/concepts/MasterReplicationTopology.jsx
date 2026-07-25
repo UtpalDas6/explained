@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { playClick, playError, playSuccess, playPop } from '../lib/sound.js'
 
 const PROPAGATION_MS = 1000
 
@@ -19,13 +20,16 @@ export default function MasterReplicationTopology() {
   const writeSlaveMode = (node) => {
     if (node === 'B') {
       setStatus('Rejected — B is a read-only slave. Writes must go to the master.')
+      playError()
       return
     }
     const v = randomValue()
     setValueA(v)
+    playClick()
     setStatus(`Wrote x=${v} to master A, replicating to slave B…`)
     setTimeout(() => {
       setValueB(v)
+      playPop()
       setStatus(`Slave B caught up to x=${v}.`)
     }, 600)
   }
@@ -41,6 +45,7 @@ export default function MasterReplicationTopology() {
       if (node === 'A') setValueA(v)
       else setValueB(v)
       setConflict(true)
+      playError()
       setStatus(`CONFLICT — ${node} was written to while ${other}'s write was still replicating. Both nodes now disagree and need reconciling.`)
       return
     }
@@ -48,11 +53,13 @@ export default function MasterReplicationTopology() {
     if (node === 'A') setValueA(v)
     else setValueB(v)
     setConflict(false)
+    playClick()
     setStatus(`Wrote x=${v} to ${node}, replicating to ${other}…`)
     const timeoutId = setTimeout(() => {
       if (node === 'A') setValueB(v)
       else setValueA(v)
       pendingRef.current = null
+      playPop()
       setStatus(`Replicated ${node}'s write to ${other}. Both nodes agree again.`)
     }, PROPAGATION_MS)
     pendingRef.current = { from: node, value: v, timeoutId }
@@ -64,6 +71,7 @@ export default function MasterReplicationTopology() {
     setValueA(v)
     setValueB(v)
     setConflict(false)
+    playSuccess()
     setStatus(`Resolved via last-write-wins — node ${winner} won, both now show x=${v}.`)
   }
 

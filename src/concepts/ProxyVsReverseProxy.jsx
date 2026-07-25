@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playPop } from '../lib/sound.js'
 
 function ProxyDiagram({ title, boxLabel, leftLabels, rightLabels, hiddenNote }) {
   const dotRef = useRef(null)
@@ -11,6 +12,7 @@ function ProxyDiagram({ title, boxLabel, leftLabels, rightLabels, hiddenNote }) 
 
   const send = () => {
     if (running) return
+    playClick()
     setRunning(true)
     const li = Math.floor(Math.random() * leftLabels.length)
     const ri = Math.floor(Math.random() * rightLabels.length)
@@ -21,7 +23,9 @@ function ProxyDiagram({ title, boxLabel, leftLabels, rightLabels, hiddenNote }) 
     gsap.set(dotRef.current, { attr: { cx: 45, cy: ly, fill: '#6ee7ff' } })
     const tl = gsap.timeline({ onComplete: () => setRunning(false) })
     tl.to(dotRef.current, { attr: { cx: 155, cy: 90 }, duration: 0.5, ease: 'power1.inOut' })
+    tl.call(() => playPop())
     tl.to(dotRef.current, { attr: { cx: 265, cy: ry }, duration: 0.5, ease: 'power1.inOut' })
+    tl.call(() => playPop())
   }
 
   return (

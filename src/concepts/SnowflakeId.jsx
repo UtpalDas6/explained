@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { playPop } from '../lib/sound.js'
 
 const EPOCH = new Date('2020-01-01T00:00:00Z').getTime()
 const MACHINE_BITS = 10
@@ -16,6 +17,7 @@ export default function SnowflakeId() {
   const seq = useRef(0)
 
   const generate = () => {
+    playPop()
     let ts = Date.now() - EPOCH
     if (ts === lastTs.current) {
       seq.current = (seq.current + 1) & MAX_SEQ

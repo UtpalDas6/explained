@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playSuccess, playError, playWhoosh } from '../lib/sound.js'
 
 export default function CapTheorem() {
   const [partitioned, setPartitioned] = useState(false)
@@ -17,14 +18,17 @@ export default function CapTheorem() {
       setPartitioned(false)
       if (valueA !== valueB) {
         setStatus(`Partition healed — CONFLICT: A=${valueA}, B=${valueB} need reconciling.`)
+        playError()
       } else {
         setStatus('Partition healed. Nodes back in sync.')
+        playSuccess()
       }
       setMode(null)
     } else {
       setPartitioned(true)
       setMode(null)
       setStatus('Network partition! Choose how to handle writes: CP or AP.')
+      playWhoosh()
     }
   }
 
@@ -35,17 +39,20 @@ export default function CapTheorem() {
       setValueB(v)
       flash(boxARef)
       flash(boxBRef)
+      playClick()
       setStatus(`Wrote x=${v} to both nodes (in sync).`)
       return
     }
     if (mode === 'CP') {
       setStatus(`Write to ${node} REJECTED — no quorum during partition. Consistency preserved, availability sacrificed.`)
+      playError()
       return
     }
     if (mode === 'AP') {
       if (node === 'A') setValueA(v)
       else setValueB(v)
       flash(node === 'A' ? boxARef : boxBRef)
+      playClick()
       setStatus(`Write x=${v} accepted on ${node} only — nodes may now disagree. Availability preserved, consistency sacrificed.`)
       return
     }

@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playClick, playTick } from '../lib/sound.js'
 
 const SLOTS = 8
 const PRODUCER_POS = new THREE.Vector3(-5.5, 0, 0)
@@ -22,6 +23,7 @@ export default function MessageQueue() {
   depthRef.current = depth
 
   const produce = useCallback(() => {
+    playClick()
     const targetIdx = Math.min(depthRef.current, SLOTS - 1)
     const id = nextId.current++
     setProduced((n) => n + 1)
@@ -33,6 +35,7 @@ export default function MessageQueue() {
 
   const consume = useCallback(() => {
     if (depthRef.current === 0) return
+    playTick()
     const id = nextId.current++
     setPackets((p) => [
       ...p,

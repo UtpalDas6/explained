@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { hashString } from '../lib/hash.js'
+import { playClick, playSuccess, playError } from '../lib/sound.js'
 
 const BITS = 32
 const K = 3
@@ -18,6 +19,7 @@ export default function BloomFilter() {
   const add = () => {
     const item = input.trim()
     if (!item || added.includes(item)) return
+    playClick()
     const positions = bitPositions(item)
     setBits((b) => {
       const next = [...b]
@@ -39,10 +41,13 @@ export default function BloomFilter() {
     const actuallyAdded = added.includes(item)
     if (!maybePresent) {
       setResult({ item, verdict: 'definitely NOT present', tone: 'good' })
+      playSuccess()
     } else if (actuallyAdded) {
       setResult({ item, verdict: 'present (added earlier)', tone: 'good' })
+      playSuccess()
     } else {
       setResult({ item, verdict: 'maybe present — false positive! never added, but all its bits were set by other items', tone: 'bad' })
+      playError()
     }
     setInput('')
   }

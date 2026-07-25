@@ -19,10 +19,29 @@
   font-weight: 600;
   letter-spacing: -0.2px;
   padding: 8px 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sidebar .brand span {
   color: var(--accent);
+}
+
+.sound-toggle {
+  background: none;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 6px;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.sound-toggle:hover {
+  opacity: 1;
+  background: var(--panel-2);
 }
 
 .sidebar-search {

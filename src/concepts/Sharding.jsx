@@ -4,6 +4,7 @@ import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
 import { hashString } from '../lib/hash.js'
+import { playClick } from '../lib/sound.js'
 
 const SHARD_COUNT = 5
 const RADIUS = 3.2
@@ -64,6 +65,7 @@ export default function Sharding() {
 
   const insert = useCallback((k) => {
     if (!k) return
+    playClick()
     const idx = hashKey(k)
     const id = nextId.current++
     setLastRoute({ key: k, idx })

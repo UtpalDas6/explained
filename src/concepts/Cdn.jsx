@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playSuccess, playError } from '../lib/sound.js'
 
 const ORIGIN_POS = new THREE.Vector3(0, 1.6, -7)
 const EDGES = [
@@ -75,11 +76,13 @@ export default function Cdn() {
     const edge = EDGES[edgeId]
     if (edgeStatesRef.current[edgeId].cached) {
       setStatus(`${edge.name}: HIT — served locally, origin not contacted`)
+      playSuccess()
       setActive(edgeId, true)
       setTimeout(() => setActive(edgeId, false), 500)
       return
     }
     setStatus(`${edge.name}: MISS — fetching from origin…`)
+    playError()
     const id = nextId.current++
     setPackets((p) => [
       ...p,

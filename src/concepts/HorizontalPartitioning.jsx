@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playClick } from '../lib/sound.js'
 
 const RANGES = [
   { label: '0–999', min: 0, max: 999 },
@@ -66,6 +67,7 @@ export default function HorizontalPartitioning() {
 
   const insert = useCallback((id) => {
     if (id == null || Number.isNaN(id) || id < 0) return
+    playClick()
     const idx = partitionIndex(id)
     const pid = nextId.current++
     setLastRoute({ id, idx })

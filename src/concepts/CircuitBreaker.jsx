@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { playSuccess, playError, playTick } from '../lib/sound.js'
 
 const FAILURE_THRESHOLD = 3
 const OPEN_TIMEOUT_MS = 3000
@@ -19,6 +20,9 @@ export default function CircuitBreaker() {
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
 
   const pushLog = (text, tone) => {
+    if (tone === 'good') playSuccess()
+    else if (tone === 'bad') playError()
+    else playTick()
     setLog((l) => [{ id: nextLogId.current++, text, tone }, ...l].slice(0, 8))
   }
 

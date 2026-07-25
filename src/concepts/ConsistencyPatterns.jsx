@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playSuccess, playPop } from '../lib/sound.js'
 
 const MODES = ['weak', 'eventual', 'strong']
 
@@ -24,21 +25,25 @@ export default function ConsistencyPatterns() {
     if (mode === 'strong') {
       setReplicaValue(v)
       flash()
+      playSuccess()
       setStatus(`Wrote x=${v}. Strong consistency: the write isn't acknowledged until the replica has it too — a read right now is guaranteed to see ${v}.`)
       return
     }
     if (mode === 'eventual') {
       setSyncing(true)
+      playClick()
       setStatus(`Wrote x=${v}. Acknowledged immediately — the replica is stale for a moment and will catch up shortly.`)
       timeoutRef.current = setTimeout(() => {
         setReplicaValue(v)
         setSyncing(false)
         flash()
+        playPop()
         setStatus(`Replica caught up to x=${v}.`)
       }, 1500)
       return
     }
     // weak
+    playClick()
     setStatus(`Wrote x=${v}. Acknowledged immediately — there's no guarantee the replica ever sees this without an explicit resync. Good for things like a live voice/video stream where stale/dropped state isn't worth retrying.`)
   }
 
@@ -47,6 +52,7 @@ export default function ConsistencyPatterns() {
     setSyncing(false)
     setReplicaValue(primaryValue)
     flash()
+    playSuccess()
     setStatus(`Manually resynced — replica now shows x=${primaryValue}.`)
   }
 

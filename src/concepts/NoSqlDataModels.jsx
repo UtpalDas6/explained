@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playClick, playPop } from '../lib/sound.js'
 
 const MODELS = ['key-value', 'document', 'wide-column', 'graph']
 
@@ -100,11 +101,11 @@ export default function NoSqlDataModels() {
     <div className="panel">
       <div className="controls">
         {MODELS.map((m) => (
-          <button key={m} className={`btn ${model === m ? 'primary' : ''}`} onClick={() => { setModel(m); setExtra(false) }}>
+          <button key={m} className={`btn ${model === m ? 'primary' : ''}`} onClick={() => { playClick(); setModel(m); setExtra(false) }}>
             {m}
           </button>
         ))}
-        <button className="btn" onClick={() => setExtra((e) => !e)}>
+        <button className="btn" onClick={() => { playPop(); setExtra((e) => !e) }}>
           {extra ? 'Remove phone field' : 'Add phone field'}
         </button>
       </div>

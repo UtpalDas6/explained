@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { playError, playSuccess } from '../lib/sound.js'
 
 const FAILOVER_DELAY_MS = 2000
 const TICK_MS = 400
@@ -51,6 +52,7 @@ export default function Failover() {
   }, [])
 
   const killPrimary = () => {
+    playError()
     setPrimaryAlive(false)
     setFailoverPending(true)
     clearTimeout(failoverTimeout.current)
@@ -61,11 +63,13 @@ export default function Failover() {
     clearTimeout(failoverTimeout.current)
     setPrimaryAlive(true)
     setFailoverPending(false)
+    playSuccess()
   }
 
   const resetActive = () => {
     setAliveA(true)
     setAliveB(true)
+    playSuccess()
   }
 
   const failCount = ticks.filter((t) => !t.ok).length
@@ -82,8 +86,8 @@ export default function Failover() {
           </>
         ) : (
           <>
-            <button className="btn" onClick={() => setAliveA(false)} disabled={!aliveA}>Kill node A</button>
-            <button className="btn" onClick={() => setAliveB(false)} disabled={!aliveB}>Kill node B</button>
+            <button className="btn" onClick={() => { playError(); setAliveA(false) }} disabled={!aliveA}>Kill node A</button>
+            <button className="btn" onClick={() => { playError(); setAliveB(false) }} disabled={!aliveB}>Kill node B</button>
             <button className="btn" onClick={resetActive}>Reset</button>
           </>
         )}

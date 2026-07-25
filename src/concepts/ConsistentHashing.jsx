@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react'
 import { gsap } from 'gsap'
 import { hashString } from '../lib/hash.js'
+import { playClick, playSuccess } from '../lib/sound.js'
 
 const CX = 250
 const CY = 210
@@ -62,6 +63,7 @@ export default function ConsistentHashing() {
   }, [])
 
   const addNode = () => {
+    playClick()
     const name = `node-${String.fromCharCode(97 + (nextNodeId.current++ % 26))}${nextNodeId.current > 26 ? nextNodeId.current : ''}`
     const color = COLORS[colorCursor.current++ % COLORS.length]
     const newNode = { id: name, name, angle: hash360(name), color }
@@ -74,6 +76,7 @@ export default function ConsistentHashing() {
 
   const removeNode = (id) => {
     if (nodes.length <= 1) return
+    playClick()
     const nextNodes = nodes.filter((n) => n.id !== id)
     setNodes(nextNodes)
     const { next, changed } = recomputeOwners(nextNodes, keys)
@@ -83,6 +86,7 @@ export default function ConsistentHashing() {
 
   const insertKey = (name) => {
     if (!name || running || nodes.length === 0) return
+    playClick()
     setRunning(true)
     const angle = hash360(name)
     const idx = ownerIndex(angle, nodes)
@@ -106,6 +110,7 @@ export default function ConsistentHashing() {
       },
       onComplete: () => {
         gsap.set(sweepRef.current, { opacity: 0 })
+        playSuccess()
         setKeys((k) => [
           ...k,
           { id: nextKeyId.current++, name, angle, ownerId: owner.id, color: owner.color },

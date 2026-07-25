@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LayoutGroup } from 'framer-motion'
 import { Chip, TableBox } from './ChipTable.jsx'
+import { playWhoosh } from '../lib/sound.js'
 
 const GROUPS = [
   { title: 'users_db', color: 'var(--accent)', tables: ['users', 'sessions'] },
@@ -15,7 +16,13 @@ export default function Federation() {
   return (
     <div className="panel">
       <div className="controls">
-        <button className="btn primary" onClick={() => setSplit((s) => !s)}>
+        <button
+          className="btn primary"
+          onClick={() => {
+            playWhoosh()
+            setSplit((s) => !s)
+          }}
+        >
           {split ? 'Merge back into one database' : 'Federate by function'}
         </button>
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playPop, playWhoosh } from '../lib/sound.js'
 
 // 0-indexed; ORDER_TOTALS[1] is "order #2" (its displayed id is index+1) everywhere below.
 const ORDER_TOTALS = [20, 45, 12, 99]
@@ -36,10 +37,15 @@ export default function Denormalization() {
     const total = ORDER_TOTALS[QUERY_INDEX]
     if (denormalized) {
       flashOrders([QUERY_INDEX])
+      playPop()
       setStatus(`1 lookup, no join: order #${QUERY_INDEX + 1} → total=${total}, user=Ada <${email}>`)
     } else {
       flashOrders([QUERY_INDEX], 500)
-      setTimeout(() => flashUser(500), 550)
+      playPop()
+      setTimeout(() => {
+        flashUser(500)
+        playPop()
+      }, 550)
       setStatus(`2 lookups, 1 join: fetch order #${QUERY_INDEX + 1}, then join to users on user_id → total=${total}, user=Ada <${email}>`)
     }
   }
@@ -48,9 +54,11 @@ export default function Denormalization() {
     setEmailVersion((v) => v + 1)
     if (denormalized) {
       flashOrders(ORDER_TOTALS.map((_, i) => i), 800)
+      playWhoosh()
       setStatus(`Denormalized: had to update all ${ORDER_TOTALS.length} order rows — 1 logical change became ${ORDER_TOTALS.length} writes.`)
     } else {
       flashUser(800)
+      playPop()
       setStatus('Normalized: updated the single users row. All orders join to it, so they all see the new email automatically.')
     }
   }

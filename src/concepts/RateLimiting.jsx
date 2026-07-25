@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playTick, playError } from '../lib/sound.js'
 
 const CAPACITY = 10
 const REFILL_MS = 700
@@ -23,6 +24,8 @@ export default function RateLimiting() {
   }, [tokens])
 
   const pushLog = (allowed) => {
+    if (allowed) playTick()
+    else playError()
     setLog((l) => [{ id: nextLogId.current++, allowed }, ...l].slice(0, 20))
   }
 

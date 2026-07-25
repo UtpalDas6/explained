@@ -5,7 +5,9 @@ self-contained scene you can poke at — send a request, kill a node, trigger a 
 and watch the mechanism actually move, instead of reading a static diagram.
 
 Built with React + Vite, animated with **GSAP**, **Framer Motion**, **Three.js**
-(via `@react-three/fiber`), and **anime.js**.
+(via `@react-three/fiber`), and **anime.js**. Every key moment — a cache hit, a packet
+arriving, a rejected request, a circuit breaker tripping — has a matching synthesized
+sound effect (Web Audio oscillators, no audio files), with a mute toggle in the sidebar.
 
 ## Why
 
@@ -111,6 +113,9 @@ src/
     Packet.jsx              shared "glowing sphere arcs from A to B" three.js primitive
     ChipTable.jsx            shared framer-motion chip/table primitive (used by
                              Vertical Partitioning and Federation)
+  lib/
+    hash.js                  FNV-1a hash used by Sharding and Consistent Hashing
+    sound.js                 synthesized sound effects (click/pop/success/error), no audio files
 ```
 
 Adding a new concept means: write a component in `src/concepts/`, import it in

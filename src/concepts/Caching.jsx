@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { animate } from 'animejs'
+import { playClick, playSuccess, playError, playPop } from '../lib/sound.js'
 
 const CLIENT_X = 60
 const CACHE_X = 340
@@ -19,6 +20,7 @@ export default function Caching() {
 
   const run = () => {
     if (running) return
+    playClick()
     setRunning(true)
     const hit = cachedRef.current
     setStatus('checking cache…')
@@ -36,6 +38,7 @@ export default function Caching() {
     if (hit) {
       tl.call(() => {
         setStatus('cache hit')
+        playSuccess()
         setHits((h) => h + 1)
         animate(cacheBoxRef.current, {
           scale: [1, 1.08, 1],
@@ -49,6 +52,7 @@ export default function Caching() {
     } else {
       tl.call(() => {
         setStatus('cache miss')
+        playError()
         setMisses((m) => m + 1)
         animate(cacheBoxRef.current, {
           translateX: [0, -6, 6, -4, 4, 0],
@@ -59,6 +63,7 @@ export default function Caching() {
       tl.to(dotRef.current, { attr: { cx: DB_X }, duration: 0.6, ease: 'power2.inOut', delay: 0.15 })
       tl.call(() => {
         setStatus('reading from database…')
+        playPop()
         animate(dbBoxRef.current, { scale: [1, 1.06, 1], duration: 400 })
       })
       tl.to(dotRef.current, { attr: { fill: '#6ee7ff' }, duration: 0.15, delay: 0.2 })
@@ -79,6 +84,7 @@ export default function Caching() {
   }
 
   const reset = () => {
+    playClick()
     cachedRef.current = false
     setHits(0)
     setMisses(0)

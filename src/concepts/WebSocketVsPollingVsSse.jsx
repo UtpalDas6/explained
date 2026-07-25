@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playTick, playPop } from '../lib/sound.js'
 
 const CLIENT_Y = 24
 const SERVER_Y = 256
@@ -81,6 +82,7 @@ export default function WebSocketVsPollingVsSse() {
 
   const run = () => {
     if (running) return
+    playClick()
     setRunning(true)
     const tl = gsap.timeline({ onComplete: () => setRunning(false) })
 
@@ -90,6 +92,7 @@ export default function WebSocketVsPollingVsSse() {
         const fromY = e.from === 'client' ? CLIENT_Y : SERVER_Y
         const toY = e.from === 'client' ? SERVER_Y : CLIENT_Y
         tl.set(el, { attr: { cy: fromY }, opacity: 1 }, e.t)
+        tl.call(() => (lane.id === 'polling' ? playTick() : playPop()), [], e.t)
         tl.to(el, { attr: { cy: toY }, duration: 0.55, ease: 'power1.inOut' }, e.t)
         tl.to(el, { opacity: 0, duration: 0.15 }, e.t + 0.55)
       })

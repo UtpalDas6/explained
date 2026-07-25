@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playPop, playSuccess } from '../lib/sound.js'
 
 const TTL_MS = 8000
 const DOMAIN = 'example.com'
@@ -30,12 +31,14 @@ export default function DnsResolution() {
 
   const lookup = () => {
     if (running) return
+    playClick()
     setRunning(true)
     gsap.set(dotRef.current, { attr: { cx: POS.browser.x, cy: POS.browser.y }, opacity: 1, fill: '#6ee7ff' })
 
     const now = Date.now()
     if (cacheEntry && cacheEntry.domain === DOMAIN && now < cacheEntry.expiresAt) {
       setStatus(`Resolver cache HIT — ${DOMAIN} → ${cacheEntry.ip} (TTL ${Math.ceil((cacheEntry.expiresAt - now) / 1000)}s left). No round trip to root/TLD/authoritative needed.`)
+      playSuccess()
       const tl = gsap.timeline({ onComplete: () => setRunning(false) })
       moveTo(tl, 'resolver', 0.35)
       moveTo(tl, 'browser', 0.35)
@@ -47,20 +50,21 @@ export default function DnsResolution() {
       onComplete: () => {
         setCacheEntry({ domain: DOMAIN, ip, expiresAt: Date.now() + TTL_MS })
         setStatus(`Resolved ${DOMAIN} → ${ip} via full recursive lookup. Resolver caches it for ${TTL_MS / 1000}s.`)
+        playSuccess()
         setRunning(false)
       },
     })
     tl.call(() => setStatus(`Browser asks the resolver for ${DOMAIN}…`))
     moveTo(tl, 'resolver')
-    tl.call(() => setStatus('Resolver asks a root server…'))
+    tl.call(() => { setStatus('Resolver asks a root server…'); playPop() })
     moveTo(tl, 'root')
     tl.call(() => setStatus('Root server: "ask the .com TLD server"'))
     moveTo(tl, 'resolver')
-    tl.call(() => setStatus('Resolver asks the TLD server…'))
+    tl.call(() => { setStatus('Resolver asks the TLD server…'); playPop() })
     moveTo(tl, 'tld')
     tl.call(() => setStatus(`TLD server: "ask ${DOMAIN}'s authoritative server"`))
     moveTo(tl, 'resolver')
-    tl.call(() => setStatus('Resolver asks the authoritative server…'))
+    tl.call(() => { setStatus('Resolver asks the authoritative server…'); playPop() })
     moveTo(tl, 'auth')
     tl.call(() => setStatus(`Authoritative server: "${DOMAIN} is at ${ip}"`))
     moveTo(tl, 'resolver')

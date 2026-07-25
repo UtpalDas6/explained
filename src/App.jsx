@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { concepts } from './data/concepts.js'
+import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
 function CodeBlock({ code }) {
@@ -59,7 +60,13 @@ function Home({ onSelect }) {
 function App() {
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
+  const [soundOn, setSoundOn] = useState(isSoundEnabled)
   const active = concepts.find((c) => c.id === activeId)
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundOn)
+    setSoundOn(!soundOn)
+  }
 
   const q = query.trim().toLowerCase()
   const filtered = q
@@ -76,6 +83,14 @@ function App() {
       <nav className="sidebar">
         <div className="brand">
           <span>Explained</span> /systems
+          <button
+            className="sound-toggle"
+            onClick={toggleSound}
+            title={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
+            aria-label={soundOn ? 'Mute sound effects' : 'Unmute sound effects'}
+          >
+            {soundOn ? '🔊' : '🔇'}
+          </button>
         </div>
         <input
           className="sidebar-search"

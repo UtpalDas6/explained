@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, LayoutGroup } from 'framer-motion'
 import { Chip, TableBox, chipStyle } from './ChipTable.jsx'
+import { playWhoosh } from '../lib/sound.js'
 
 const CORE_COLS = ['id', 'name', 'email']
 const PROFILE_COLS = ['bio', 'last_login', 'avatar_url', 'preferences']
@@ -12,7 +13,13 @@ export default function VerticalPartitioning() {
   return (
     <div className="panel">
       <div className="controls">
-        <button className="btn primary" onClick={() => setSplit((s) => !s)}>
+        <button
+          className="btn primary"
+          onClick={() => {
+            playWhoosh()
+            setSplit((s) => !s)
+          }}
+        >
           {split ? 'Merge back' : 'Split table'}
         </button>
       </div>

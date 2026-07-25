@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playClick, playSuccess } from '../lib/sound.js'
 
 const REPLICA_COUNT = 3
 const PRIMARY_POS = new THREE.Vector3(-3.2, 0, 0)
@@ -66,6 +67,7 @@ export default function Replication() {
   const writeStart = useRef(0)
 
   const write = useCallback(() => {
+    playClick()
     version.current += 1
     const v = version.current
     writeStart.current = performance.now()
@@ -105,6 +107,7 @@ export default function Replication() {
       if (pendingAcks.current === 0) {
         setCommitMs(Math.round(performance.now() - writeStart.current))
         setStatus('committed (all replicas acked)')
+        playSuccess()
       }
     }
   }, [mode])

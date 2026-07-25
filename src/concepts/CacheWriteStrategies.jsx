@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { playClick, playPop, playSuccess, playError } from '../lib/sound.js'
 
 const CLIENT_X = 60
 const CACHE_X = 340
@@ -16,10 +17,14 @@ function WriteFlowDemo({ mode }) {
   const [running, setRunning] = useState(false)
   const [status, setStatus] = useState('idle')
 
-  const pulse = (ref) => gsap.fromTo(ref.current, { scale: 1 }, { scale: 1.08, duration: 0.2, yoyo: true, repeat: 1, transformOrigin: '50% 50%' })
+  const pulse = (ref) => {
+    playPop()
+    gsap.fromTo(ref.current, { scale: 1 }, { scale: 1.08, duration: 0.2, yoyo: true, repeat: 1, transformOrigin: '50% 50%' })
+  }
 
   const write = () => {
     if (running) return
+    playClick()
     setRunning(true)
     const v = Math.floor(Math.random() * 90) + 10
     gsap.set(dotRef.current, { attr: { cx: CLIENT_X, fill: '#6ee7ff' } })
@@ -133,6 +138,7 @@ function RefreshAheadDemo() {
   useEffect(() => {
     if (cache.justRefreshed) {
       setStatus('Refreshed ahead of expiry — cache updated in the background before TTL hit zero, so reads never missed.')
+      playSuccess()
       setCache((c) => ({ ...c, justRefreshed: false }))
     }
   }, [cache.justRefreshed])
@@ -140,6 +146,7 @@ function RefreshAheadDemo() {
   const simulateDbChange = () => {
     const v = Math.floor(Math.random() * 90) + 10
     setDbValue(v)
+    playPop()
     setStatus(`DB changed to ${v} underneath the cache (e.g. another service wrote it directly).`)
   }
 
@@ -150,9 +157,12 @@ function RefreshAheadDemo() {
     if (cache.ttl <= 0) {
       setStatus(`Cache had fully expired — this read missed, refetched ${dbValueRef.current} from the DB, and reset the TTL.`)
       setCache({ ttl: 100, value: dbValueRef.current, justRefreshed: false })
+      playError()
     } else {
       const stale = cache.value !== dbValueRef.current
       setStatus(`Read ${cache.value} from cache${stale ? ' — STALE, DB has moved on' : ' (fresh)'}. TTL at ${cache.ttl}%.`)
+      if (stale) playError()
+      else playClick()
     }
   }
 
@@ -193,7 +203,7 @@ export default function CacheWriteStrategies() {
     <div className="panel">
       <div className="controls">
         {MODES.map((m) => (
-          <button key={m} className={`btn ${mode === m ? 'primary' : ''}`} onClick={() => setMode(m)}>
+          <button key={m} className={`btn ${mode === m ? 'primary' : ''}`} onClick={() => { playClick(); setMode(m) }}>
             {m}
           </button>
         ))}

@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playClick, playError, playSuccess } from '../lib/sound.js'
 
 const CLIENT_POS = new THREE.Vector3(0, 0, -5)
 const GATEWAY_POS = new THREE.Vector3(0, 0, -1.6)
@@ -63,6 +64,7 @@ export default function ApiGateway() {
 
   const sendRequest = useCallback(
     (service) => {
+      playClick()
       const id = nextId.current++
       setPackets((p) => [
         ...p,
@@ -78,12 +80,14 @@ export default function ApiGateway() {
       if (packet.phase === 'toGateway') {
         if (!authValid) {
           setStatus(`401 Unauthorized — blocked at gateway, ${packet.service.name} never contacted`)
+          playError()
           setBlockedFlash(true)
           setTimeout(() => setBlockedFlash(false), 400)
           return
         }
         if (rateLimited) {
           setStatus(`429 Too Many Requests — blocked at gateway, ${packet.service.name} never contacted`)
+          playError()
           setBlockedFlash(true)
           setTimeout(() => setBlockedFlash(false), 400)
           return
@@ -97,6 +101,7 @@ export default function ApiGateway() {
         ])
       } else {
         setStatus(`200 OK from ${packet.service.name}`)
+        playSuccess()
       }
     },
     [authValid, rateLimited]

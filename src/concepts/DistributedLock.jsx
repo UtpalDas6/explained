@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playSuccess, playTick } from '../lib/sound.js'
 
 const CLIENTS = ['client A', 'client B', 'client C']
 
@@ -7,16 +8,20 @@ export default function DistributedLock() {
   const [waiting, setWaiting] = useState([])
   const [log, setLog] = useState([])
 
-  const pushLog = (text) => setLog((l) => [text, ...l].slice(0, 6))
+  const pushLog = (text, tone = 'info') => {
+    if (tone === 'good') playSuccess()
+    else if (tone === 'info') playTick()
+    setLog((l) => [text, ...l].slice(0, 6))
+  }
 
   const tryAcquire = (client, holderNow, waitingNow) => {
     if (holderNow === null) {
-      pushLog(`${client} acquired the lock`)
+      pushLog(`${client} acquired the lock`, 'good')
       return { holder: client, waiting: waitingNow.filter((c) => c !== client) }
     }
     if (holderNow === client) return { holder: holderNow, waiting: waitingNow }
     if (waitingNow.includes(client)) return { holder: holderNow, waiting: waitingNow }
-    pushLog(`${client} blocked — waiting for ${holderNow} to release`)
+    pushLog(`${client} blocked — waiting for ${holderNow} to release`, 'wait')
     return { holder: holderNow, waiting: [...waitingNow, client] }
   }
 
@@ -32,10 +37,10 @@ export default function DistributedLock() {
       const [next, ...rest] = waiting
       setHolder(next)
       setWaiting(rest)
-      pushLog(`${client} released — lock handed to ${next}`)
+      pushLog(`${client} released — lock handed to ${next}`, 'good')
     } else {
       setHolder(null)
-      pushLog(`${client} released the lock`)
+      pushLog(`${client} released the lock`, 'good')
     }
   }
 

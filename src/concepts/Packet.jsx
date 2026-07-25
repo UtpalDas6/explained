@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { playPop } from '../lib/sound.js'
 
 function easeInOut(t) {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
@@ -22,6 +23,7 @@ export default function Packet({ from, to, duration = 800, color = '#6ee7ff', ar
     // onArrive (often a counter increment) fires exactly once per packet.
     if (t >= 1 && !arrived.current) {
       arrived.current = true
+      playPop()
       onArrive()
     }
   })

@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import Packet from './Packet.jsx'
+import { playClick } from '../lib/sound.js'
 
 const SERVER_COUNT = 4
 const CLIENT_POS = new THREE.Vector3(0, 0, -5)
@@ -82,6 +83,7 @@ export default function LoadBalancing() {
   loadsRef.current = loads
 
   const sendRequest = useCallback(() => {
+    playClick()
     const id = nextId.current++
     setPackets((p) => [...p, { id, from: CLIENT_POS, to: LB_POS, color: '#6ee7ff', duration: 500, phase: 'toLB' }])
   }, [])
