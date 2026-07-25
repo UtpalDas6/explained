@@ -1,0 +1,82 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { concepts } from './data/concepts.js'
+import './App.css'
+
+function Home({ onSelect }) {
+  return (
+    <div>
+      <div className="concept-header">
+        <h2>System design, visualized</h2>
+        <p>Pick a concept to see it move.</p>
+      </div>
+      <div className="home-grid">
+        {concepts.map((c, i) => (
+          <motion.button
+            key={c.id}
+            className="concept-card"
+            onClick={() => onSelect(c.id)}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06, duration: 0.4, ease: 'easeOut' }}
+            whileHover={{ y: -4, borderColor: 'var(--accent)' }}
+          >
+            <h3>{c.title}</h3>
+            <p>{c.blurb}</p>
+            <span className="tag">{c.tag}</span>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [activeId, setActiveId] = useState(null)
+  const active = concepts.find((c) => c.id === activeId)
+
+  return (
+    <div className="app">
+      <nav className="sidebar">
+        <div className="brand">
+          <span>Explained</span> /systems
+        </div>
+        <button
+          className={`nav-item ${!activeId ? 'active' : ''}`}
+          onClick={() => setActiveId(null)}
+        >
+          Home
+        </button>
+        {concepts.map((c) => (
+          <button
+            key={c.id}
+            className={`nav-item ${activeId === c.id ? 'active' : ''}`}
+            onClick={() => setActiveId(c.id)}
+          >
+            {c.title}
+          </button>
+        ))}
+      </nav>
+      <main className="main">
+        {active ? (
+          <motion.div
+            key={active.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="concept-header">
+              <h2>{active.title}</h2>
+              <p>{active.blurb}</p>
+            </div>
+            <active.Component />
+          </motion.div>
+        ) : (
+          <Home onSelect={setActiveId} />
+        )}
+      </main>
+    </div>
+  )
+}
+
+export default App
