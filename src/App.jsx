@@ -3,6 +3,31 @@ import { motion } from 'framer-motion'
 import { concepts } from './data/concepts.js'
 import './App.css'
 
+function CodeBlock({ code }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = () => {
+    navigator.clipboard.writeText(code.snippet)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+
+  return (
+    <div className="info-section">
+      <div className="info-section-header">
+        <h3>Code</h3>
+        <div className="code-meta">
+          <span className="lang-tag">{code.lang}</span>
+          <button className="btn" onClick={copy}>{copied ? 'Copied!' : 'Copy'}</button>
+        </div>
+      </div>
+      <pre className="code-block">
+        <code>{code.snippet}</code>
+      </pre>
+    </div>
+  )
+}
+
 function Home({ onSelect }) {
   return (
     <div>
@@ -89,6 +114,13 @@ function App() {
               <p>{active.blurb}</p>
             </div>
             <active.Component />
+            {active.code && <CodeBlock code={active.code} />}
+            {active.realWorld && (
+              <div className="info-section">
+                <h3>Where this shows up</h3>
+                <p>{active.realWorld}</p>
+              </div>
+            )}
           </motion.div>
         ) : (
           <Home onSelect={setActiveId} />
