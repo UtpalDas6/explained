@@ -367,3 +367,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Three.js scenes (OrbitControls) handle their own pinch-to-zoom/rotate/pan via
+   touch, but the canvas needs exclusive control of touch gestures or the browser's
+   native page-zoom fights it for the same two-finger gesture. SVG/DOM diagrams have
+   no such conflict — they're already pinch-zoomable through the page's own zoom. */
+.main canvas {
+  touch-action: none;
+}
