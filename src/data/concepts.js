@@ -19,6 +19,7 @@ import WebSocketVsPollingVsSse from '../concepts/WebSocketVsPollingVsSse.jsx'
 import ApiGateway from '../concepts/ApiGateway.jsx'
 import ConsistencyPatterns from '../concepts/ConsistencyPatterns.jsx'
 import Failover from '../concepts/Failover.jsx'
+import RdsProxy from '../concepts/RdsProxy.jsx'
 import DnsResolution from '../concepts/DnsResolution.jsx'
 import MasterReplicationTopology from '../concepts/MasterReplicationTopology.jsx'
 import Federation from '../concepts/Federation.jsx'
@@ -424,6 +425,24 @@ MultiAZ: true # standby in another AZ, promoted automatically on primary failure
     },
     realWorld:
       'AWS RDS Multi-AZ (active-passive) vs. a multi-region active-active API behind global load balancing (Cloudflare, Route 53 latency routing) — the RDS failover has a real (short) outage window; the active-active setup doesn\'t.',
+  },
+  {
+    id: 'rds-proxy',
+    title: 'RDS Proxy',
+    blurb: 'A pooling proxy multiplexes many app connections onto a few real DB connections, and hides failover from clients.',
+    tag: 'state machine',
+    Component: RdsProxy,
+    code: {
+      lang: 'js',
+      snippet: `// Lambda connects to the proxy endpoint, not the DB directly —
+// the proxy holds a small pool of real Postgres connections open
+// and reuses them across thousands of short-lived invocations
+const client = new Client({ host: 'myapp.proxy-abc123.us-east-1.rds.amazonaws.com' })
+await client.connect()
+await client.query('SELECT * FROM orders WHERE id = $1', [id])`,
+    },
+    realWorld:
+      'AWS RDS Proxy sitting in front of a Lambda-triggered API so a traffic spike opens thousands of function invocations without each one grabbing (and exhausting) a raw Postgres connection, and so a Multi-AZ failover reconnects the pool instead of erroring out every client at once.',
   },
   {
     id: 'dns-resolution',
