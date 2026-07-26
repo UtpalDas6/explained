@@ -88,6 +88,32 @@
   color: var(--accent);
 }
 
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  margin: 0 0 10px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 7px 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn.active {
+  background: var(--panel);
+  color: var(--accent);
+}
+
 .sidebar-search {
   font-family: inherit;
   background: var(--panel-2);
@@ -231,6 +257,16 @@
 .code-meta .btn {
   padding: 4px 12px;
   font-size: 12px;
+}
+
+.company-tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
 .lang-tag {

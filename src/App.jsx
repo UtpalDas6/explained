@@ -1,14 +1,27 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { concepts } from './data/concepts.js'
+import { dsaConcepts } from './data/dsaConcepts.js'
 import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
+const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts]
+
+const MODES = {
+  systems: { brand: '/systems', heading: 'System design, visualized', sub: 'Pick a concept to see it move.' },
+  dsa: { brand: '/ds_algo', heading: 'Data structures & algorithms, visualized', sub: 'Pick a concept, step through it, then go solve it on LeetCode.' },
+}
+
+// A single code entry ({ lang, snippet }) renders one block as before; an
+// array of entries (the dsa concepts have python + js) renders language tabs.
 function CodeBlock({ code }) {
+  const snippets = Array.isArray(code) ? code : [code]
+  const [tab, setTab] = useState(0)
   const [copied, setCopied] = useState(false)
+  const active = snippets[Math.min(tab, snippets.length - 1)]
 
   const copy = () => {
-    navigator.clipboard.writeText(code.snippet)
+    navigator.clipboard.writeText(active.snippet)
     setCopied(true)
     setTimeout(() => setCopied(false), 1200)
   }
@@ -18,26 +31,66 @@ function CodeBlock({ code }) {
       <div className="info-section-header">
         <h3>Code</h3>
         <div className="code-meta">
-          <span className="lang-tag">{code.lang}</span>
+          {snippets.length > 1 ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              {snippets.map((s, i) => (
+                <button key={s.lang} className={`btn ${i === tab ? 'primary' : ''}`} style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setTab(i)}>
+                  {s.lang}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="lang-tag">{active.lang}</span>
+          )}
           <button className="btn" onClick={copy}>{copied ? 'Copied!' : 'Copy'}</button>
         </div>
       </div>
       <pre className="code-block">
-        <code>{code.snippet}</code>
+        <code>{active.snippet}</code>
       </pre>
     </div>
   )
 }
 
-function Home({ onSelect }) {
+const DIFFICULTY_COLOR = { Easy: 'var(--good)', Medium: 'var(--accent)', Hard: 'var(--bad)' }
+
+function LeetCodeList({ problems }) {
+  return (
+    <div className="info-section">
+      <h3>Practice on LeetCode</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {problems.map((p) => (
+          <a
+            key={p.url}
+            href={p.url}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', color: 'var(--text)', textDecoration: 'none', padding: '8px 12px', borderRadius: 8, background: 'var(--panel-2)', border: '1px solid var(--border)' }}
+          >
+            <span style={{ fontSize: 13 }}>{p.title}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {p.companies?.map((c) => (
+                <span key={c} className="company-tag">{c}</span>
+              ))}
+              <span style={{ fontSize: 11, color: DIFFICULTY_COLOR[p.difficulty] ?? 'var(--text-dim)' }}>{p.difficulty}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Home({ mode, onSelect }) {
+  const list = allConcepts.filter((c) => c.section === mode)
   return (
     <div>
       <div className="concept-header">
-        <h2>System design, visualized</h2>
-        <p>Pick a concept to see it move.</p>
+        <h2>{MODES[mode].heading}</h2>
+        <p>{MODES[mode].sub}</p>
       </div>
       <div className="home-grid">
-        {concepts.map((c, i) => (
+        {list.map((c, i) => (
           <motion.button
             key={c.id}
             className="concept-card"
@@ -60,17 +113,24 @@ function Home({ onSelect }) {
 const MOBILE_BREAKPOINT = 768
 
 function App() {
+  const [mode, setMode] = useState('systems')
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
   const [soundOn, setSoundOn] = useState(isSoundEnabled)
   const [sidebarOpen, setSidebarOpen] = useState(
     () => typeof window === 'undefined' || window.innerWidth > MOBILE_BREAKPOINT
   )
-  const active = concepts.find((c) => c.id === activeId)
+  const active = allConcepts.find((c) => c.id === activeId)
 
   const toggleSound = () => {
     setSoundEnabled(!soundOn)
     setSoundOn(!soundOn)
+  }
+
+  const switchMode = (m) => {
+    setMode(m)
+    setActiveId(null)
+    setQuery('')
   }
 
   // On mobile the sidebar is a drawer over the content, so picking a concept
@@ -81,21 +141,22 @@ function App() {
   }
 
   const q = query.trim().toLowerCase()
+  const inMode = allConcepts.filter((c) => c.section === mode)
   const filtered = q
-    ? concepts.filter(
+    ? inMode.filter(
         (c) =>
           c.title.toLowerCase().includes(q) ||
           c.blurb.toLowerCase().includes(q) ||
           c.tag.toLowerCase().includes(q)
       )
-    : concepts
+    : inMode
 
   return (
     <div className="app">
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
       <nav className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="brand">
-          <span>Explained</span> /systems
+          <span>Explained</span> {MODES[mode].brand}
           <div className="brand-actions">
             <button
               className="icon-btn"
@@ -114,6 +175,10 @@ function App() {
               ‹
             </button>
           </div>
+        </div>
+        <div className="mode-toggle">
+          <button className={`mode-btn ${mode === 'systems' ? 'active' : ''}`} onClick={() => switchMode('systems')}>Systems</button>
+          <button className={`mode-btn ${mode === 'dsa' ? 'active' : ''}`} onClick={() => switchMode('dsa')}>DS & Algo</button>
         </div>
         <input
           className="sidebar-search"
@@ -163,6 +228,7 @@ function App() {
             </div>
             <active.Component />
             {active.code && <CodeBlock code={active.code} />}
+            {active.leetcode && <LeetCodeList problems={active.leetcode} />}
             {active.realWorld && (
               <div className="info-section">
                 <h3>Where this shows up</h3>
@@ -171,7 +237,7 @@ function App() {
             )}
           </motion.div>
         ) : (
-          <Home onSelect={setActiveId} />
+          <Home mode={mode} onSelect={setActiveId} />
         )}
       </main>
     </div>
