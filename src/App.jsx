@@ -238,6 +238,12 @@ function App() {
                 <p>{active.realWorld}</p>
               </div>
             )}
+            {active.pitfall && (
+              <div className="info-section">
+                <h3>Watch out for</h3>
+                <p>{active.pitfall}</p>
+              </div>
+            )}
           </motion.div>
         ) : (
           <Home mode={mode} onSelect={setActiveId} />

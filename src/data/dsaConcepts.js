@@ -77,6 +77,8 @@ export const dsaConcepts = [
     ],
     realWorld:
       'Reach for this whenever the brute force is a nested loop over a sorted or monotonic sequence: merging sorted arrays, palindrome checks, trapping rain water, and cycle detection (Floyd\'s slow/fast pointer) are all this same shape.',
+    pitfall:
+      'Only works when the array is sorted (or the invariant lets pointers move monotonically) — running it on unsorted input silently gives a wrong answer instead of an error.',
   },
   {
     id: 'sliding-window',
@@ -116,6 +118,8 @@ export const dsaConcepts = [
     ],
     realWorld:
       'The go-to pattern whenever a problem asks for the best/longest/shortest contiguous run — rate limiters (requests in the last N seconds) are a sliding window over time instead of over an array.',
+    pitfall:
+      'The variable-size version needs a clear rule for exactly when to shrink the window — get that condition wrong and it either over-counts or misses valid windows entirely.',
   },
   {
     id: 'linked-list',
@@ -166,6 +170,8 @@ def reverse_list(head):
     ],
     realWorld:
       'Shows up any time you need O(1)-space in-place mutation of a chain of references: undo/redo history, browser back/forward stacks, and LRU cache internals (a doubly linked list) all lean on the same pointer-rewiring instinct.',
+    pitfall:
+      'Reversing in place discards the original list — if any other reference still points into the old structure, it now sees a broken, partially-reversed chain instead of an error.',
   },
   {
     id: 'stack-queue',
@@ -211,6 +217,8 @@ def reverse_list(head):
     ],
     realWorld:
       'A stack is what tracks function calls (and recursion depth), undo history, and DFS. A queue is what backs a task/message queue, print spoolers, and BFS — the "explore order" of a traversal is really just a choice of which of these two backs it.',
+    pitfall:
+      'A recursive solution is a stack in disguise — recursion depth on a large enough input can blow the call stack the exact same way an unbounded array-backed stack would.',
   },
   {
     id: 'binary-search',
@@ -255,6 +263,8 @@ def reverse_list(head):
     ],
     realWorld:
       'Anywhere the search space is monotonic, not just a literal sorted array — "binary search on the answer" solves optimization problems like minimizing a max/maximizing a min by binary-searching over possible answers and checking feasibility.',
+    pitfall:
+      'Off-by-one errors in the boundary condition (`<` vs `<=`, `mid` vs `mid + 1`) are the single most common bug in binary search — it\'s easy to write a version that infinite-loops or skips the target.',
   },
   {
     id: 'bst',
@@ -323,6 +333,8 @@ function search(root, target) {
     ],
     realWorld:
       '*O(log n) only holds if the tree stays balanced — database indexes (B-trees are a wide BST) rebalance on every write for exactly this reason, and in-memory ordered maps (Java TreeMap, C++ std::map) are red-black trees under the hood.',
+    pitfall:
+      'Inserting sorted or nearly-sorted data degrades an unbalanced BST into a linked list — O(log n) only holds if the tree stays roughly balanced, which plain insertion doesn\'t guarantee.',
   },
   {
     id: 'heap',
@@ -396,6 +408,8 @@ function kthLargest(nums, k) {
     ],
     realWorld:
       'The engine behind any "top k" / "k closest" / "k most frequent" question, Dijkstra\'s shortest path (always expand the closest unvisited node), and OS task schedulers picking the next highest-priority job.',
+    pitfall:
+      'A heap only guarantees the root is the min/max — the rest of the array is NOT sorted, so treating heap order as full sort order is a common mistake.',
   },
   {
     id: 'graph-bfs-dfs',
@@ -469,6 +483,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'BFS is how "shortest path in an unweighted graph" and web crawlers exploring by link-depth work. DFS is how dependency resolution (topological sort), cycle detection, and maze/backtracking solvers work.',
+    pitfall:
+      'Forgetting to mark a node visited before (not after) recursing or enqueuing it causes it to be processed multiple times, or infinite-loops outright on a graph with a cycle.',
   },
   {
     id: 'sorting',
@@ -519,6 +535,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'Quick sort (in place, cache-friendly) is what most language standard sorts use for primitives; merge sort (stable, predictable O(n log n)) is what they fall back to for objects where stability matters — Python\'s Timsort and Java\'s Arrays.sort(Object[]) are merge-sort derivatives.',
+    pitfall:
+      'Quicksort\'s worst case is O(n²) on already-sorted or adversarial input with a naive pivot choice — production sorts randomize the pivot, or fall back to a different algorithm, specifically to avoid this.',
   },
   {
     id: 'dp-lcs',
@@ -567,6 +585,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       '`git diff` and `diff` itself compute an LCS/edit-distance table to find the minimal set of line changes. The same table-filling idea (identify overlapping subproblems, cache them) is the whole trick behind every DP problem, not just this one.',
+    pitfall:
+      'A DP table sized to the full input can quietly blow memory on large inputs — most 2D DP problems can be rolled down to O(n) space once each row is noticed to depend only on the row before it.',
   },
   {
     id: 'knapsack-01',
@@ -612,6 +632,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'The 0/1 choice — take an item whole or leave it — is the backbone of any budget-constrained selection problem: portfolio selection under a budget, resource allocation, and every subset-sum variant reduce to this same table.',
+    pitfall:
+      'Iterating the weight dimension forward instead of backward turns 0/1 knapsack into unbounded knapsack (reusing the same item multiple times) — a one-line direction bug changes the whole problem.',
   },
   {
     id: 'lis',
@@ -651,6 +673,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'Same shape as diff-style version comparison (the longest run of unchanged, ordered items) and scheduling ("longest chain of compatible tasks"). The O(n log n) patience-sorting variant is the standard follow-up once you\'ve shown this O(n²) table.',
+    pitfall:
+      'The O(n²) table version is easy to write but too slow for large inputs — the O(n log n) patience-sorting version is a genuinely different algorithm, not just an optimization of this one.',
   },
   {
     id: 'coin-change',
@@ -691,6 +715,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'Making change is the canonical counterexample to "just be greedy" — coins [1,4,5] for amount 8 need 2 coins (4+4), not the 4 a greedy biggest-first pick gives. Any "fewest/most ways to reach a target from a fixed set of pieces" problem (perfect squares, dice combinations, stair-climbing with variable steps) is this same 1D table.',
+    pitfall:
+      'Greedy (always take the biggest coin) looks like it works on common currency but is provably wrong for some coin sets — DP is required for a correct answer in general.',
   },
   {
     id: 'matrix-chain',
@@ -740,6 +766,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'The "try every split point k" interval-DP pattern here is the same one behind Burst Balloons and counting distinct BST shapes — anywhere the cost of combining a range depends on where you split it first.',
+    pitfall:
+      'This is O(n³) even though it only decides multiplication *order*, not doing any of the actual multiplication — easy to either overestimate the real cost or forget it doesn\'t compute the product itself.',
   },
   {
     id: 'union-find',
@@ -804,6 +832,8 @@ function dfs(graph, start, visited = new Set(), order = []) {
     ],
     realWorld:
       'Kruskal\'s minimum spanning tree algorithm uses union-find to reject any edge that would close a cycle. It\'s also how "friend circles"-style connected-components-with-updates problems and offline dynamic connectivity queries avoid rebuilding a graph from scratch on every query.',
+    pitfall:
+      'Without path compression and union by rank/size, both find and union degrade toward O(n) per call — the near-O(1) amortized bound depends on both optimizations together, not just one of them.',
   },
   {
     id: 'trie',
@@ -891,6 +921,8 @@ class Trie {
     ],
     realWorld:
       'Autocomplete and spell-checkers are the textbook use — a trie answers "does anything start with this prefix" in time proportional to the prefix length, regardless of dictionary size. IP routing tables use the same structure (a bitwise trie) for longest-prefix matching.',
+    pitfall:
+      'A trie can use significantly more memory than a hash set for the same words, since every node carries a full child map — worth it for prefix queries, wasteful if exact lookups are all that\'s ever needed.',
   },
   {
     id: 'topo-sort',
@@ -952,6 +984,8 @@ def topo_sort(num_nodes, edges):
     ],
     realWorld:
       'Build systems compiling files in dependency order, package managers resolving install order, and spreadsheet formula recalculation all need a valid ordering of a dependency DAG — exactly what topological sort produces, with cycle detection (an incomplete order) as a free side effect.',
+    pitfall:
+      'A cycle in the graph means no valid topological order exists — Kahn\'s algorithm has to explicitly detect this (fewer nodes emitted than exist) rather than silently returning a wrong or partial order.',
   },
   {
     id: 'dijkstra',
@@ -1011,6 +1045,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'GPS routing and network routing protocols (OSPF) compute shortest paths this way. Any "cheapest/fastest path with weighted edges" interview question is Dijkstra — unless edges can be negative, in which case it\'s Bellman-Ford instead.',
+    pitfall:
+      'Dijkstra assumes non-negative edge weights — a single negative edge can make it return a wrong shortest path instead of erroring, since it never revisits a node once finalized.',
   },
   {
     id: 'backtracking-nqueens',
@@ -1087,6 +1123,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'Every "generate all X" or "does an arrangement exist satisfying these constraints" problem — Sudoku solvers, subset/permutation generation, word search on a grid — is backtracking: try a choice, recurse, undo if it leads nowhere.',
+    pitfall:
+      'Without pruning — checking constraints before recursing deeper, not just at a leaf — backtracking degenerates into brute-force enumeration of every possibility; the pruning is what makes it fast, not the recursion itself.',
   },
   {
     id: 'segment-tree',
@@ -1168,6 +1206,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'Anywhere you need range queries (sum/min/max) AND point updates on the same array — a plain prefix-sum array is O(1) query but O(n) update; a segment tree gives O(log n) for both. A Fenwick/BIT tree solves the narrower prefix-sum case with less code.',
+    pitfall:
+      'It\'s a heavier structure to build and reason about than a plain prefix-sum array — only worth it once point updates need to mix with range queries, not for read-only range sums.',
   },
   {
     id: 'hashing',
@@ -1209,6 +1249,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'The single most common opening question at every one of these companies, and for good reason — it\'s the simplest example of the "remember what you\'ve seen" trick that turns an O(n²) brute force into O(n) across dozens of other problems (grouping, deduplication, counting pairs).',
+    pitfall:
+      'Hash collisions are handled differently by every implementation (chaining vs open addressing) — assuming O(1) lookup always holds ignores that a bad hash function or adversarial input can degrade it toward O(n).',
   },
   {
     id: 'intervals',
@@ -1254,6 +1296,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'Calendar/scheduling systems merging busy blocks, resource-booking conflict checks, and log-range compaction are all this exact sweep. Meeting Rooms II is the same idea run through a heap instead: track how many intervals are simultaneously "open."',
+    pitfall:
+      'Forgetting to sort by start time first is the most common bug — the whole one-pass merge only works because sorting guarantees an interval can only ever overlap the most recently merged one.',
   },
   {
     id: 'prefix-sum',
@@ -1298,6 +1342,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'Any "sum/count over a range, queried many times" problem wants this instead of re-summing each query. Combined with a hash map (like Subarray Sum Equals K) it also answers "how many subarrays satisfy X" without checking every subarray.',
+    pitfall:
+      'A prefix-sum array answers range-sum queries in O(1), but any single point update invalidates every prefix after it — it\'s the wrong structure the moment the underlying array needs to change.',
   },
   {
     id: 'bit-manipulation',
@@ -1330,6 +1376,8 @@ function dijkstra(adj, start) {
     ],
     realWorld:
       'Bitmasks compactly represent sets (used constantly in bitmask-DP for "subset of n items" problems), and XOR-based tricks show up in finding unique/missing elements without extra memory — a hash set would work too, but uses O(n) space this doesn\'t need.',
+    pitfall:
+      'Bitwise tricks are dense and easy to get subtly wrong (sign bits, shift amounts, operator precedence) — code that "works" on small test cases can still be wrong at the boundary, like the sign bit on a negative number.',
   },
   {
     id: 'lru-cache',
@@ -1395,6 +1443,8 @@ class LRUCache {
     ],
     realWorld:
       'By far the most-cited coding question in OpenAI onsite interviews, and a staple everywhere else too — it\'s less about a clever algorithm and more about composing two structures so their strengths cover each other\'s weaknesses, which is exactly the "practical, production-shaped" style these design questions look for.',
+    pitfall:
+      'A cache with no capacity limit isn\'t actually an LRU cache, it\'s just a growing map — the eviction step under capacity pressure is the entire point, and it\'s the part naive implementations skip.',
   },
   {
     id: 'binary-tree-dfs',
@@ -1452,6 +1502,8 @@ def diameter_of_binary_tree(root):
     ],
     realWorld:
       'Unlike the BST concept, none of these rely on left-smaller-right-bigger ordering — they\'re about the shape of an arbitrary binary tree. Diameter/max-path-sum both use the same "compute a value at each node from its children\'s already-computed values" post-order pattern that shows up in tree DP generally.',
+    pitfall:
+      'Recomputing a subtree\'s height from scratch at every node, instead of reusing the post-order return value, turns an O(n) traversal into O(n²) — the efficient version relies on each call doing its work exactly once.',
   },
   {
     id: 'greedy-stock',
@@ -1492,6 +1544,8 @@ def diameter_of_binary_tree(root):
     ],
     realWorld:
       'Greedy only works when a locally-best choice can be proven to never hurt the global optimum — here, a higher profit can never come from a higher previous minimum. When that proof doesn\'t hold (variable transaction costs, cooldowns, at-most-k-transactions), the problem becomes DP instead — Best Time II/III/IV are exactly that escalation.',
+    pitfall:
+      'This greedy only works for a *single* buy/sell transaction — allowing multiple transactions, a cooldown, or a transaction fee breaks the "track the minimum so far" trick and needs DP instead.',
   },
   {
     id: 'two-heaps-median',
@@ -1559,5 +1613,7 @@ class MedianFinder {
     ],
     realWorld:
       'Anywhere a running statistic (median, percentile) needs updating as data streams in without re-sorting everything each time — monitoring dashboards computing p50 latency live are doing a variant of exactly this.',
+    pitfall:
+      'The two heaps must stay balanced in size (differing by at most one) after every insert — skip the rebalancing step and the median calculation silently reads from the wrong heap.',
   },
 ]

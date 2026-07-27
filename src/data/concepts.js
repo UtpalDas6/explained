@@ -67,6 +67,8 @@ async def get_user(id):
     ],
     realWorld:
       'Redis or Memcached in front of Postgres/MySQL for hot reads (user profiles, product pages, session data). Also how your browser\'s HTTP cache and a CDN edge behave for static assets.',
+    pitfall:
+      'Stale reads are the default failure mode: without explicit invalidation on write, users can see old data until the TTL expires — TTL-only caching trades correctness for simplicity.',
   },
   {
     id: 'sharding',
@@ -101,6 +103,8 @@ await pool.fetch('SELECT * FROM orders WHERE user_id = $1', user_id)`,
     ],
     realWorld:
       'Vitess (used by YouTube, Slack) shards MySQL this way; MongoDB and Elasticsearch shard collections/indices across nodes automatically using the same hash-bucket idea.',
+    pitfall:
+      'Cross-shard queries and joins get slow or impossible, and resharding later means migrating live data across nodes — pick the shard key carefully upfront, because changing it is expensive.',
   },
   {
     id: 'replication',
@@ -138,6 +142,8 @@ async def create_post(post: PostIn):
     ],
     realWorld:
       'AWS RDS / Cloud SQL read replicas take exactly this shape: writes go to the primary endpoint, read-heavy endpoints (feeds, search, reporting) hit replica endpoints to keep load off the primary.',
+    pitfall:
+      'Async replication lags behind the primary — a read right after a write can miss it entirely, which is a real bug ("I just saved this, where did it go?") if the app doesn\'t read its own writes from the primary.',
   },
   {
     id: 'consistent-hashing',
@@ -176,6 +182,8 @@ async def create_post(post: PostIn):
     ],
     realWorld:
       'DynamoDB and Cassandra partition data across nodes this way. Memcached client libraries (ketama) and most CDN request routers use the same trick so adding a cache node doesn\'t invalidate everything at once.',
+    pitfall:
+      'Naive hashing gives poor key distribution across a small node count; production systems need virtual nodes per physical node to avoid hot spots and lopsided load.',
   },
   {
     id: 'horizontal-partitioning',
@@ -195,6 +203,8 @@ CREATE TABLE orders_2024 PARTITION OF orders
     },
     realWorld:
       'Postgres/MySQL declarative partitioning for time-series-shaped tables (orders, logs, events) so old partitions can be dropped or archived cheaply. BigQuery and Snowflake partition tables the same way for query pruning.',
+    pitfall:
+      'Any query that doesn\'t include the partition key scans every partition — often slower than an unpartitioned table, since partitioning only helps the access pattern it was designed around.',
   },
   {
     id: 'vertical-partitioning',
@@ -213,6 +223,8 @@ CREATE TABLE users_profile (
     },
     realWorld:
       'Pulling rarely-read blobs (bio, avatar, preferences) out of a hot users table so the common query path (auth lookups) scans a smaller, cache-friendlier table — a common step when a monolith\'s "users" table has grown huge.',
+    pitfall:
+      'Any query that needs both halves now pays an extra join or round trip, so splitting a table that\'s usually queried as a whole just adds latency for no benefit.',
   },
   {
     id: 'load-balancing',
@@ -237,6 +249,8 @@ server {
     },
     realWorld:
       'nginx/HAProxy upstream blocks, AWS ALB target groups, and a Kubernetes Service (via kube-proxy or an Envoy sidecar) all implement one of these algorithms to spread traffic across pods/instances.',
+    pitfall:
+      'Round-robin and random ignore actual server load, and sticky sessions quietly defeat the whole point of load balancing if the app isn\'t actually stateless underneath.',
   },
   {
     id: 'cdn',
@@ -256,6 +270,8 @@ X-Cache: HIT`,
     },
     realWorld:
       'Cloudflare, Fastly, and CloudFront serve static assets (and increasingly full HTML pages) from edge PoPs near the user, only reaching back to origin on a cache miss or once the `max-age` TTL expires.',
+    pitfall:
+      'Cached at the edge means a bad deploy or bug stays live at every PoP until the TTL expires or someone triggers an explicit purge — a CDN rollback isn\'t instant.',
   },
   {
     id: 'message-queue',
@@ -292,6 +308,8 @@ channel.basic_consume(queue='emails', on_message_callback=on_message)`,
     ],
     realWorld:
       'RabbitMQ or SQS decoupling a slow operation (sending an email, generating a PDF, calling a flaky third-party API) from the request that triggered it, so the API can respond instantly.',
+    pitfall:
+      'Decoupling buys resilience but adds a new failure mode: a message that\'s never successfully processed (a poison message) can silently stall the whole pipeline without a dead-letter queue to catch it.',
   },
   {
     id: 'cap-theorem',
@@ -315,6 +333,8 @@ session.execute(query, params, consistency_level=ConsistencyLevel.ONE)     # AP-
     ],
     realWorld:
       'Cassandra\'s tunable consistency levels and DynamoDB\'s choice between "eventually consistent" (default, cheaper, faster) and "strongly consistent" reads are CAP made into an API parameter.',
+    pitfall:
+      'CAP only bites during an actual network partition — teams often over-engineer for partition tolerance when, in their real deployment, partitions are rare, short, and not the thing that\'s actually going to hurt them.',
   },
   {
     id: 'rate-limiting',
@@ -342,6 +362,8 @@ if count > 100:
     ],
     realWorld:
       'API gateways (Kong, AWS API Gateway) and middleware like express-rate-limit enforce exactly this. Stripe and GitHub publish their rate limits and `Retry-After` headers built on the same token-bucket idea.',
+    pitfall:
+      'A rate limit enforced with an in-memory counter per app instance doesn\'t limit anything once there\'s more than one instance — it needs a shared store like Redis to actually be correct under concurrency.',
   },
   {
     id: 'proxy-vs-reverse-proxy',
@@ -360,6 +382,8 @@ location /api/ {
     },
     realWorld:
       'nginx/Envoy sitting in front of a microservice fleet is a reverse proxy. A corporate outbound proxy or a VPN client is a forward proxy — the destination site sees the proxy\'s IP, not the employee\'s.',
+    pitfall:
+      'Mixing the two up is the most common mistake: a misconfigured reverse proxy that leaks backend headers or internal hostnames defeats the entire reason for putting it there.',
   },
   {
     id: 'circuit-breaker',
@@ -395,6 +419,8 @@ except pybreaker.CircuitBreakerError:
     ],
     realWorld:
       'resilience4j (Java) and opossum (Node.js) — successors to Netflix\'s original Hystrix — wrap exactly this pattern around calls to flaky downstream services, so one slow dependency doesn\'t take down the whole request pipeline.',
+    pitfall:
+      'Too sensitive a threshold trips on normal blips and fails healthy requests; too loose a one lets a genuinely broken dependency keep timing out every request instead of failing fast.',
   },
   {
     id: 'bloom-filter',
@@ -424,6 +450,8 @@ if email not in bf:
     ],
     realWorld:
       'Chrome\'s Safe Browsing list, Medium\'s "already read this" tracking, and Cassandra/HBase all use a Bloom filter to cheaply skip a disk read when they can prove something isn\'t there.',
+    pitfall:
+      'False positives are guaranteed by design (never false negatives) — using a Bloom filter as the actual source of truth instead of a cheap pre-filter in front of a real lookup will silently return wrong answers.',
   },
   {
     id: 'snowflake-id',
@@ -445,6 +473,8 @@ id = generator.next_id()  # e.g. 7123456789012345 — sortable by creation time`
     ],
     realWorld:
       'Twitter\'s original Snowflake service, Discord message IDs, and Instagram\'s sharded ID generator all use this scheme so every service instance can mint globally-unique, roughly-time-ordered IDs with zero coordination.',
+    pitfall:
+      'Clock skew, leap seconds, or an NTP correction that moves the clock backward can produce duplicate or out-of-order IDs unless the generator explicitly detects and guards against it.',
   },
   {
     id: 'distributed-lock',
@@ -475,6 +505,8 @@ finally:
     ],
     realWorld:
       'Preventing a payment webhook that got delivered twice from double-charging a customer, or electing a single leader among several instances of a scheduled job so it doesn\'t run N times at once.',
+    pitfall:
+      'A lock held past its TTL — because the client stalled — can expire and let a second client acquire it too, both now believing they hold exclusive access; this exact edge case is why Redlock\'s safety guarantees are disputed.',
   },
   {
     id: 'database-indexing',
@@ -492,6 +524,8 @@ CREATE INDEX idx_orders_user_id ON orders (user_id);
     },
     realWorld:
       'Adding `CREATE INDEX` to fix a slow `WHERE` clause in Postgres is using a B-Tree. Choosing Cassandra or ScyllaDB for a write-heavy event pipeline is choosing an LSM-Tree storage engine instead.',
+    pitfall:
+      'Every index speeds up the reads it was built for but slows every write to that table, and an index the query planner never actually uses is pure overhead — more indexes isn\'t automatically faster.',
   },
   {
     id: 'websocket-vs-polling-vs-sse',
@@ -523,6 +557,8 @@ async def events():
     ],
     realWorld:
       'Slack and Discord use WebSockets for chat (bidirectional, low latency). Live dashboards and stock tickers often use SSE (server-only push, simpler than WebSocket). A basic "check for new notifications" widget is usually just polling.',
+    pitfall:
+      'WebSockets need sticky sessions or a shared pub/sub backplane behind a load balancer, or a message published from one server instance silently never reaches a client connected to a different one.',
   },
   {
     id: 'api-gateway',
@@ -542,6 +578,8 @@ routes:
     },
     realWorld:
       'Kong, AWS API Gateway, and Apigee sit in front of a microservice fleet doing exactly this: one place to enforce auth and rate limits instead of every service reimplementing it.',
+    pitfall:
+      'A single gateway becomes a single point of failure and a latency floor for every request behind it — one misbehaving plugin (a slow auth check) can degrade every service downstream at once.',
   },
   {
     id: 'consistency-patterns',
@@ -565,6 +603,8 @@ table.get_item(Key=key, ConsistentRead=True)   # strong (costs more, always fres
     ],
     realWorld:
       'DynamoDB\'s `ConsistentRead` flag and MongoDB\'s read/write concern levels expose this exact tradeoff directly in the client API, per query.',
+    pitfall:
+      'Picking eventual consistency for something like an account balance or inventory count, without deliberately handling the read-your-own-write gap, is how double-spends and overselling actually happen in production.',
   },
   {
     id: 'failover',
@@ -580,6 +620,8 @@ MultiAZ: true # standby in another AZ, promoted automatically on primary failure
     },
     realWorld:
       'AWS RDS Multi-AZ (active-passive) vs. a multi-region active-active API behind global load balancing (Cloudflare, Route 53 latency routing) — the RDS failover has a real (short) outage window; the active-active setup doesn\'t.',
+    pitfall:
+      'Automatic failover still has a detection-and-promotion window — real downtime, just shorter — and a too-aggressive health check can trigger a failover on a transient blip that would\'ve resolved itself.',
   },
   {
     id: 'rds-proxy',
@@ -609,6 +651,8 @@ cur.execute('SELECT * FROM orders WHERE id = %s', (id,))`,
     ],
     realWorld:
       'AWS RDS Proxy sitting in front of a Lambda-triggered API so a traffic spike opens thousands of function invocations without each one grabbing (and exhausting) a raw Postgres connection, and so a Multi-AZ failover reconnects the pool instead of erroring out every client at once.',
+    pitfall:
+      'Pooled connections can hold an open transaction across requests if application code doesn\'t explicitly commit or rollback, which leaks locks on the real database and starves the whole pool for every other client.',
   },
   {
     id: 'dns-resolution',
@@ -625,6 +669,8 @@ example.com.  300  IN  A  93.184.216.34   ; TTL = 300s`,
     },
     realWorld:
       'Route 53 / Cloudflare DNS and your ISP\'s resolver do exactly this recursive walk once, then cache. Lowering a record\'s TTL before a migration trades cache efficiency for faster failover.',
+    pitfall:
+      'TTL is a request, not a guarantee — plenty of resolvers and ISPs cache longer than instructed, so lowering a record\'s TTL before a migration doesn\'t fully protect you from stale answers.',
   },
   {
     id: 'master-replication-topology',
@@ -640,6 +686,8 @@ SET GLOBAL auto_increment_offset = 1; -- node 1: 1,3,5…  node 2: 2,4,6…`,
     },
     realWorld:
       'MySQL Group Replication and Postgres BDR support multi-primary, but most teams default to single-primary (master-slave) specifically to avoid building conflict resolution — it\'s a real ongoing engineering cost.',
+    pitfall:
+      'Multi-primary writes can silently diverge, and "last write wins" is usually the wrong conflict resolution strategy for anything that isn\'t a simple overwrite — most teams underestimate how often this actually happens.',
   },
   {
     id: 'federation',
@@ -665,6 +713,8 @@ return {**user, 'orders': orders}`,
     ],
     realWorld:
       'The standard first step when splitting a monolith into microservices: give "users", "orders", and "products" their own databases along service boundaries before splitting the application code itself.',
+    pitfall:
+      'Splitting a database means giving up cross-database transactions and joins — moving money between two now-federated services needs a saga or two-phase process, not a single atomic UPDATE anymore.',
   },
   {
     id: 'denormalization',
@@ -680,6 +730,8 @@ ALTER TABLE orders ADD COLUMN customer_name text;`,
     },
     realWorld:
       'Read-heavy analytics tables, materialized views, and most NoSQL document models (MongoDB, DynamoDB) lean on denormalization by default since cheap joins usually aren\'t even available.',
+    pitfall:
+      'Every duplicated field is a place data can drift out of sync after a partial write — the database no longer enforces consistency for you, so the application has to own it explicitly.',
   },
   {
     id: 'nosql-data-models',
@@ -707,6 +759,8 @@ await redis.set('user:1', json.dumps({'name': 'Ada'}))`,
     ],
     realWorld:
       'MongoDB for flexible product catalogs, Redis for sessions/cache, Cassandra for write-heavy time-series data, Neo4j for fraud rings and recommendation graphs — picking the model to fit the access pattern.',
+    pitfall:
+      'Modeling a document or key-value store the way you\'d model a relational one — deep joins reconstructed in application code — throws away the model\'s actual advantage and just adds a slower, less consistent read path.',
   },
   {
     id: 'cache-write-strategies',
@@ -738,6 +792,8 @@ flush_queue.append({'key': key, 'value': value})`,
     ],
     realWorld:
       'Write-through for anything financial (never allowed to be stale). Write-behind for high-throughput counters like "likes" or view counts, where losing the last few increments on a crash is an acceptable tradeoff for speed.',
+    pitfall:
+      'Write-behind can silently lose the last few writes if the process crashes before they flush to the database — never reach for it on anything (payments, inventory) that must never be lost.',
   },
   {
     id: 'task-queue-back-pressure',
@@ -768,5 +824,7 @@ resize_image.delay(upload_data)  # backs off once the queue is saturated`,
     ],
     realWorld:
       'Sidekiq (Ruby), BullMQ (Node), and Celery (Python) all implement this: a bounded job queue with a worker pool for uploads, emails, and report generation, with back pressure to stop the queue from growing unbounded under load.',
+    pitfall:
+      'Rejecting once the queue is full is deliberate back pressure, not a bug — skip it and an unbounded queue just moves the outage downstream, from "requests fail fast" to "the whole worker process runs out of memory."',
   },
 ]
