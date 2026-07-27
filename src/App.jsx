@@ -244,6 +244,12 @@ function App() {
                 <p>{active.pitfall}</p>
               </div>
             )}
+            {active.fix && (
+              <div className="info-section">
+                <h3>How to fix it</h3>
+                <p>{active.fix}</p>
+              </div>
+            )}
           </motion.div>
         ) : (
           <Home mode={mode} onSelect={setActiveId} />

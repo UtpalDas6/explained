@@ -69,6 +69,8 @@ a is b  # True`,
       'App-wide config objects, database connection pools, and loggers — anywhere creating a second instance would be wasteful or actively wrong. Overused it becomes global mutable state that makes tests order-dependent, so reach for dependency injection first if testability matters.',
     pitfall:
       'Overusing it turns into global mutable state that makes unit tests order-dependent and hides a class\'s dependencies — most "must be one instance" cases are better served by a single instance passed in (dependency injection) than enforced by the class itself.',
+    fix:
+      'Prefer constructing one instance at startup and passing it in via dependency injection — that gives every consumer the same object without a static/global hard-coding the "only one" rule into the class itself.',
   },
   {
     id: 'factory-method',
@@ -110,6 +112,8 @@ shape = ShapeFactory.create('circle')`,
       'Any SDK with `Document.createElement(tag)`- or `driver.createConnection()`-style APIs — the caller names what it wants and the library picks the concrete class. Keeps `new SomeConcreteClass()` calls out of business logic so a new subtype can be added in one place.',
     pitfall:
       'Adds a layer of indirection for what\'s sometimes just a `new` call — it earns its keep once there\'s actually more than one concrete type to choose between, not preemptively for a class with a single implementation.',
+    fix:
+      'Start with a direct constructor call; introduce the factory only once a second concrete type actually shows up — refactoring to add it later is a small, mechanical change.',
   },
   {
     id: 'abstract-factory',
@@ -145,6 +149,8 @@ render_ui(dark_factory)  # both widgets guaranteed to match the dark theme`,
       'Cross-platform UI toolkits (a Mac widget factory vs a Windows widget factory) and theme systems — one factory swap changes every produced widget consistently, instead of every call site independently checking "is this dark mode?"',
     pitfall:
       'Adding a new *product* (not a new family) means touching every existing factory implementation — it optimizes for new families, not new product types, so picking it backwards makes every future change ripple across factories.',
+    fix:
+      'If new product types are more likely to appear than new families, favor a simpler factory method (or dependency injection) per product instead — reserve abstract factory for when families are the axis that changes.',
   },
   {
     id: 'builder',
@@ -184,6 +190,8 @@ burger = BurgerBuilder().add('bun').add('patty').add('cheese').build()`,
       'Query builders (SQL, Elasticsearch), HTTP request builders, and any constructor that would otherwise need a dozen optional parameters — chainable `.add()`/`.with()` calls read cleanly and only `.build()` at the end has to know how to assemble the final object.',
     pitfall:
       'For an object with two or three fields, a builder is pure ceremony — it earns its keep once the constructor would otherwise need five-plus optional parameters.',
+    fix:
+      'Use plain named or optional constructor parameters (or an options object) until the parameter list genuinely gets unwieldy — introduce the builder once that threshold is actually hit.',
   },
   {
     id: 'prototype',
@@ -221,6 +229,8 @@ orc2 = spawn(orc_prototype, weapon='axe')`,
       'Game engines spawning many similar enemies from one configured template, and `structuredClone`/`Object.create(proto)` in JS itself — cloning a pre-built object is cheaper than re-running an expensive constructor or re-fetching config for every new instance.',
     pitfall:
       'A shallow clone silently shares nested objects and arrays with the original — mutating a "cloned" nested field mutates the original too, unless the clone is deliberately deep.',
+    fix:
+      'Deep-clone explicitly (`structuredClone` in JS, `copy.deepcopy` in Python) whenever the object has nested mutable structures, or make the prototype itself immutable so shallow copies can\'t cause aliasing bugs.',
   },
   {
     id: 'adapter',
@@ -258,6 +268,8 @@ logger = LoggerAdapter(legacy_logger)`,
       'Wrapping a third-party SDK or a legacy module so it matches an interface your app already codes against — the classic case is swapping payment providers (Stripe vs PayPal) behind one `charge(amount)` method the rest of the app calls.',
     pitfall:
       'An adapter that has to do real work to bridge mismatched semantics (not just rename methods) is a sign the two interfaces don\'t actually line up — sometimes that mismatch is worth fixing upstream instead of papering over.',
+    fix:
+      'If the adapter is translating fundamentally different behavior — not just method names — consider whether the underlying dependency should be replaced instead of permanently wrapped.',
   },
   {
     id: 'bridge',
@@ -295,6 +307,8 @@ circle = Circle(VectorRenderer())`,
       "Cross-platform GUI frameworks (a Window abstraction bridged to per-OS implementations) and driver-style APIs — avoids the class explosion you'd get from subclassing every shape × every renderer combination directly.",
     pitfall:
       'It\'s easy to introduce this abstraction before there are actually two independent hierarchies that vary — with only one implementation ever built, it\'s just an extra indirection with no payoff yet.',
+    fix:
+      'Wait until a second independent implementation actually exists before introducing the bridge — refactor a single concrete class into the split abstraction/implementation only once that second variant is real.',
   },
   {
     id: 'composite',
@@ -341,6 +355,8 @@ root.get_size()  # recurses through every nested folder automatically`,
       'Filesystem trees, DOM nodes, and UI component trees — any "container that can hold more containers" needs a single method that works the same whether it\'s called on one leaf or an entire subtree.',
     pitfall:
       'Treating a leaf and a composite identically only works cleanly if every operation makes sense on both — an operation that\'s meaningless on a leaf (like "add child") forces an awkward no-op or an exception.',
+    fix:
+      'Give the leaf a sensible default (a no-op `add()` that throws or silently ignores) and document that leaves are terminal, or split the interface so only composite nodes expose child-management methods.',
   },
   {
     id: 'decorator',
@@ -376,6 +392,8 @@ order['cost']()  # stacks each wrapper's addition`,
       "Express/Koa middleware, React higher-order components, and Java's `BufferedInputStream(new FileInputStream(...))`-style stream wrapping — each layer adds one capability and forwards to the one it wraps.",
     pitfall:
       'Stacking many decorators makes debugging painful — the runtime object is now N layers of wrapping, and a stack trace through it is noisier than a single class with an if/else would be.',
+    fix:
+      'Keep the decorator chain shallow and name each wrapper clearly (or log which decorators are active) so a stack trace through several layers is still traceable back to the source.',
   },
   {
     id: 'facade',
@@ -412,6 +430,8 @@ HomeTheaterFacade(amp, projector, lights, dvd).watch_movie()`,
       "SDK entry points like `stripe.charges.create()` that hide dozens of internal API calls, and a `Database` class exposing `.query()` while hiding connection pooling, retries, and query building underneath.",
     pitfall:
       'A facade that just forwards one-to-one to subsystem calls without actually simplifying anything is dead weight — it should hide real complexity, not just rename it.',
+    fix:
+      'Only add a facade method when it\'s actually collapsing multiple calls or hiding real sequencing/configuration — if it\'s a 1:1 passthrough, just expose the subsystem directly instead.',
   },
   {
     id: 'flyweight',
@@ -448,6 +468,8 @@ trees = [{'pos': pos, 'type': get_tree_type('oak')} for pos in positions]`,
       'Rendering a forest or a crowd (shared mesh/texture per type, unique transform per instance), and string interning — anywhere object count is huge but the distinct "kinds" of object are few.',
     pitfall:
       'Splitting state into intrinsic (shared) and extrinsic (per-instance) adds real complexity — only worth it once you\'ve actually measured that raw object count is a memory problem, not preemptively.',
+    fix:
+      'Profile actual memory usage first — only split state into intrinsic and extrinsic once object count is measured to be a real bottleneck, not as a starting design choice.',
   },
   {
     id: 'proxy',
@@ -485,6 +507,8 @@ trees = [{'pos': pos, 'type': get_tree_type('oak')} for pos in positions]`,
       "JS's own `Proxy` object for intercepting property access, lazy-loaded images, and ORMs returning a lightweight proxy that only hits the database when a related field is actually touched.",
     pitfall:
       'A caching proxy that never invalidates silently serves stale data forever — it needs the same cache-invalidation discipline as any other cache, not a free pass because it\'s "just a proxy."',
+    fix:
+      'Give the proxy\'s cache the same TTL or explicit-invalidation strategy you\'d use for any other cache — never let "it\'s a proxy" be an excuse to skip invalidation.',
   },
   {
     id: 'chain-of-responsibility',
@@ -528,6 +552,8 @@ chain = Manager(100, Director(1000, VP(10000)))`,
       'Middleware pipelines (Express, servlet filters) and approval workflows — each handler only decides "can I handle this?" and forwards otherwise, so the caller never needs to know the full chain.',
     pitfall:
       'If no handler in the chain claims the request, it just disappears (or throws) with no obvious owner — always design an explicit fallback/default handler at the end of the chain.',
+    fix:
+      'Add a terminal default handler at the end of the chain that explicitly handles (or logs and rejects) anything none of the earlier handlers claimed, instead of letting it silently vanish.',
   },
   {
     id: 'command',
@@ -575,6 +601,8 @@ def undo_last():
       'Undo/redo stacks in editors, GUI button click handlers, and task queues — wrapping "what to do" as data instead of a direct function call is what makes replaying, logging, or reversing an action possible.',
     pitfall:
       'Wrapping every trivial action as a command object "for future flexibility" is overkill — it earns its keep specifically when you need undo, queuing, or logging, not for a plain button click.',
+    fix:
+      'Reach for command objects specifically when you need undo, queuing, replay, or logging — call the function directly for anything that\'s fired once and forgotten.',
   },
   {
     id: 'interpreter',
@@ -610,6 +638,8 @@ expr.interpret()  # 7`,
       'Small embedded expression languages — spreadsheet formulas, search-query syntax, feature-flag rules — where hand-rolling a full parser/compiler is overkill but a tiny recursive tree of interpret() calls does the job.',
     pitfall:
       'Hand-rolled interpreters don\'t scale past toy grammars — anything beyond a handful of rules is faster and safer to build on an existing parser generator or expression library instead.',
+    fix:
+      'Reach for an existing parser generator (ANTLR, PEG.js) or expression-evaluation library once the grammar grows past a handful of rules, instead of hand-extending a custom interpreter.',
   },
   {
     id: 'iterator',
@@ -653,6 +683,8 @@ for item in Collection():
       "JS's own `for...of` protocol (`Symbol.iterator`) is this pattern built into the language — any custom data structure (tree, linked list, paginated API results) can be walked with the same `for...of` once it implements `next()`.",
     pitfall:
       'A custom iterator that mutates the underlying collection while iterating over it invalidates its own cursor — the classic "modified during iteration" bug still applies here.',
+    fix:
+      'Iterate over a snapshot or copy of the collection if it might be mutated during the loop, or use an iterator implementation that explicitly detects and errors on concurrent modification.',
   },
   {
     id: 'mediator',
@@ -692,6 +724,8 @@ for item in Collection():
       'Chat rooms, air traffic control towers, and UI dialogs where many widgets need to react to each other (checkbox toggles disable a field) — every colleague talks only to the mediator, not to N-1 other colleagues directly.',
     pitfall:
       'The mediator itself can turn into a god object that knows about every interaction in the system — it consolidates coupling, it doesn\'t eliminate it.',
+    fix:
+      'Split one large mediator into several smaller, purpose-specific mediators — one per interaction domain — once it starts accumulating unrelated responsibilities.',
   },
   {
     id: 'memento',
@@ -738,6 +772,8 @@ editor.restore(history.pop())`,
       'Undo history in text/graphics editors and transactional rollback (save a snapshot before a risky operation, restore it if the operation fails) — the caretaker holding the snapshots never needs to understand what is inside them.',
     pitfall:
       'Storing memento snapshots without ever pruning the history leaks memory over a long session — an undo stack needs a size cap, or it just grows forever.',
+    fix:
+      'Cap the undo stack at a fixed size (drop the oldest snapshot when the cap is hit), or periodically compact/checkpoint history instead of keeping every single snapshot forever.',
   },
   {
     id: 'observer',
@@ -779,6 +815,8 @@ product.subscribe(lambda price: print('price changed:', price))`,
       "DOM `addEventListener`, React state subscriptions, and pub/sub systems (Redis pub/sub, EventEmitter) — the subject broadcasts a change once and doesn't need to know or care who's listening.",
     pitfall:
       'An observer that\'s never unsubscribed keeps the subject holding a reference to it forever — this is one of the most common memory-leak sources in event-driven UIs.',
+    fix:
+      'Always pair `subscribe` with an explicit `unsubscribe` on teardown (component unmount, object disposal), or use weak references so a forgotten observer can still be garbage collected.',
   },
   {
     id: 'state',
@@ -822,6 +860,8 @@ class Order:
       "Order/workflow status machines (Pending → Shipped → Delivered), TCP connection states, and traffic light controllers — each state's own class defines what its transitions do, instead of one giant `switch (status)` scattered across the codebase.",
     pitfall:
       'Because transitions live inside each state class instead of one place, it\'s easy to lose track of the overall state machine — worth diagramming the transitions separately so nobody has to reconstruct them by reading N classes.',
+    fix:
+      'Keep a single state-transition diagram (even just a comment or doc) as the source of truth, and consider centralizing the transition table if per-class scattering starts causing bugs.',
   },
   {
     id: 'strategy',
@@ -857,6 +897,8 @@ def checkout(total, strategy_key):
       'Payment processing, sort comparators passed to `.sort(cmp)`, and pricing/discount rules — swapping the strategy object changes the algorithm entirely without touching the code that calls it.',
     pitfall:
       'If two strategies actually share 90% of their logic, forcing them into fully separate classes duplicates that shared part — sometimes a single function with a parameter is honestly simpler than the pattern.',
+    fix:
+      'Factor the shared 90% into a common base or a shared helper function that each strategy calls, so only the genuinely differing part lives in each strategy class.',
   },
   {
     id: 'template-method',
@@ -905,6 +947,8 @@ class Tea(CaffeineBeverage):
       'Test framework lifecycles (`setUp()` → `test()` → `tearDown()`), and any base class that fixes the overall sequence of an operation (`render()`, `save()`) while letting subclasses fill in only the steps that actually differ.',
     pitfall:
       'Subclasses can only override the specific hook steps the base class exposes — if a subclass needs to change the overall sequence itself, template method doesn\'t allow that without breaking the contract.',
+    fix:
+      'If a subclass needs to reorder or skip steps, that\'s a sign template method is the wrong pattern for it — switch to strategy (inject the whole algorithm) instead of forcing it through hook overrides.',
   },
   {
     id: 'visitor',
@@ -945,5 +989,7 @@ class AreaVisitor:
       'AST tooling — linters, compilers, and code formatters all "visit" every node type with a different operation (type-check, transpile, pretty-print) without the AST node classes themselves knowing about any of those operations.',
     pitfall:
       'Adding a new shape (not a new operation) means touching every existing visitor — it optimizes for new operations over a fixed set of types, so it\'s the wrong tool when new types are the thing that changes often.',
+    fix:
+      'If new types are more likely to appear than new operations, put the operations back on the types themselves (plain polymorphism) instead — reserve visitor for when operations are the axis that changes.',
   },
 ]
