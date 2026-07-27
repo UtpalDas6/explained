@@ -39,9 +39,10 @@ export const concepts = [
     blurb: 'Requests check a fast cache before hitting the slow database.',
     tag: 'gsap + anime.js',
     Component: Caching,
-    code: {
-      lang: 'js',
-      snippet: `// Cache-aside with Redis in front of Postgres
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Cache-aside with Redis in front of Postgres
 async function getUser(id) {
   const cached = await redis.get(\`user:\${id}\`)
   if (cached) return JSON.parse(cached)
@@ -50,7 +51,20 @@ async function getUser(id) {
   await redis.set(\`user:\${id}\`, JSON.stringify(user), 'EX', 300) // 5 min TTL
   return user
 }`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Cache-aside with Redis in front of Postgres
+async def get_user(id):
+    cached = await redis.get(f'user:{id}')
+    if cached:
+        return json.loads(cached)
+
+    user = await db.fetch_one('SELECT * FROM users WHERE id = $1', id)
+    await redis.set(f'user:{id}', json.dumps(user), ex=300)  # 5 min TTL
+    return user`,
+      },
+    ],
     realWorld:
       'Redis or Memcached in front of Postgres/MySQL for hot reads (user profiles, product pages, session data). Also how your browser\'s HTTP cache and a CDN edge behave for static assets.',
   },
@@ -60,9 +74,10 @@ async function getUser(id) {
     blurb: 'Data is split across nodes by a hash of its key.',
     tag: 'three.js',
     Component: Sharding,
-    code: {
-      lang: 'js',
-      snippet: `// Route a key to one of N shard connection pools
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Route a key to one of N shard connection pools
 function shardFor(userId, shardCount = 4) {
   const hash = crypto.createHash('md5').update(userId).digest('hex')
   const bucket = parseInt(hash.slice(0, 8), 16) % shardCount
@@ -71,7 +86,19 @@ function shardFor(userId, shardCount = 4) {
 
 const pool = shardFor(userId)
 await pool.query('SELECT * FROM orders WHERE user_id = $1', [userId])`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Route a key to one of N shard connection pools
+def shard_for(user_id, shard_count=4):
+    digest = hashlib.md5(user_id.encode()).hexdigest()
+    bucket = int(digest[:8], 16) % shard_count
+    return shard_pools[bucket]
+
+pool = shard_for(user_id)
+await pool.fetch('SELECT * FROM orders WHERE user_id = $1', user_id)`,
+      },
+    ],
     realWorld:
       'Vitess (used by YouTube, Slack) shards MySQL this way; MongoDB and Elasticsearch shard collections/indices across nodes automatically using the same hash-bucket idea.',
   },
@@ -81,9 +108,10 @@ await pool.query('SELECT * FROM orders WHERE user_id = $1', [userId])`,
     blurb: 'Writes on a primary propagate to replicas, sync or async.',
     tag: 'three.js',
     Component: Replication,
-    code: {
-      lang: 'js',
-      snippet: `const primary = new Pool({ host: 'db-primary.internal' })
+    code: [
+      {
+        lang: 'js',
+        snippet: `const primary = new Pool({ host: 'db-primary.internal' })
 const replica = new Pool({ host: 'db-replica.internal' })
 
 app.get('/posts', async (req, res) => {
@@ -93,7 +121,21 @@ app.get('/posts', async (req, res) => {
 app.post('/posts', async (req, res) => {
   await primary.query('INSERT INTO posts (title, body) VALUES ($1, $2)', [req.body.title, req.body.body])
 })`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `primary = await asyncpg.create_pool(host='db-primary.internal')
+replica = await asyncpg.create_pool(host='db-replica.internal')
+
+@app.get('/posts')
+async def list_posts():
+    return await replica.fetch('SELECT * FROM posts ORDER BY created_at DESC LIMIT 20')
+
+@app.post('/posts')
+async def create_post(post: PostIn):
+    await primary.execute('INSERT INTO posts (title, body) VALUES ($1, $2)', post.title, post.body)`,
+      },
+    ],
     realWorld:
       'AWS RDS / Cloud SQL read replicas take exactly this shape: writes go to the primary endpoint, read-heavy endpoints (feeds, search, reporting) hit replica endpoints to keep load off the primary.',
   },
@@ -103,9 +145,10 @@ app.post('/posts', async (req, res) => {
     blurb: 'Keys walk a ring to their node — adding/removing nodes remaps only a slice.',
     tag: 'gsap',
     Component: ConsistentHashing,
-    code: {
-      lang: 'js',
-      snippet: `class HashRing {
+    code: [
+      {
+        lang: 'js',
+        snippet: `class HashRing {
   constructor(nodes) {
     this.ring = nodes
       .map((n) => ({ node: n, angle: hash(n) }))
@@ -116,7 +159,21 @@ app.post('/posts', async (req, res) => {
     return this.ring.find((n) => n.angle >= h)?.node ?? this.ring[0].node
   }
 }`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `class HashRing:
+    def __init__(self, nodes):
+        self.ring = sorted(((node_hash(n), n) for n in nodes))
+
+    def node_for(self, key):
+        h = node_hash(key)
+        for angle, node in self.ring:
+            if angle >= h:
+                return node
+        return self.ring[0][1]`,
+      },
+    ],
     realWorld:
       'DynamoDB and Cassandra partition data across nodes this way. Memcached client libraries (ketama) and most CDN request routers use the same trick so adding a cache node doesn\'t invalidate everything at once.',
   },
@@ -206,9 +263,10 @@ X-Cache: HIT`,
     blurb: 'A producer and consumer talk through a FIFO queue instead of directly.',
     tag: 'three.js',
     Component: MessageQueue,
-    code: {
-      lang: 'js',
-      snippet: `// Producer — API handler, returns immediately
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Producer — API handler, returns immediately
 await channel.sendToQueue('emails', Buffer.from(JSON.stringify({ to, subject })))
 res.status(202).json({ queued: true })
 
@@ -217,7 +275,21 @@ channel.consume('emails', async (msg) => {
   await sendEmail(JSON.parse(msg.content.toString()))
   channel.ack(msg)
 })`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Producer — API handler, returns immediately
+channel.basic_publish(exchange='', routing_key='emails', body=json.dumps({'to': to, 'subject': subject}))
+return {'queued': True}, 202
+
+# Consumer — separate worker process
+def on_message(ch, method, properties, body):
+    send_email(json.loads(body))
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+channel.basic_consume(queue='emails', on_message_callback=on_message)`,
+      },
+    ],
     realWorld:
       'RabbitMQ or SQS decoupling a slow operation (sending an email, generating a PDF, calling a flaky third-party API) from the request that triggered it, so the API can respond instantly.',
   },
@@ -227,12 +299,20 @@ channel.consume('emails', async (msg) => {
     blurb: 'During a network partition you must choose: reject writes (CP) or risk divergence (AP).',
     tag: 'gsap',
     Component: CapTheorem,
-    code: {
-      lang: 'js',
-      snippet: `// Cassandra: consistency level chosen per query
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Cassandra: consistency level chosen per query
 await client.execute(query, params, { consistencyLevel: 'QUORUM' }) // CP-leaning
 await client.execute(query, params, { consistencyLevel: 'ONE' })    // AP-leaning, faster, may read stale`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Cassandra: consistency level chosen per query
+session.execute(query, params, consistency_level=ConsistencyLevel.QUORUM)  # CP-leaning
+session.execute(query, params, consistency_level=ConsistencyLevel.ONE)     # AP-leaning, faster, may read stale`,
+      },
+    ],
     realWorld:
       'Cassandra\'s tunable consistency levels and DynamoDB\'s choice between "eventually consistent" (default, cheaper, faster) and "strongly consistent" reads are CAP made into an API parameter.',
   },
@@ -242,13 +322,24 @@ await client.execute(query, params, { consistencyLevel: 'ONE' })    // AP-leanin
     blurb: 'A token bucket absorbs bursts, then rejects requests once it runs dry.',
     tag: 'gsap',
     Component: RateLimiting,
-    code: {
-      lang: 'js',
-      snippet: `const key = \`ratelimit:\${userId}\`
+    code: [
+      {
+        lang: 'js',
+        snippet: `const key = \`ratelimit:\${userId}\`
 const count = await redis.incr(key)
 if (count === 1) await redis.expire(key, 60)
 if (count > 100) return res.status(429).send('Too Many Requests')`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `key = f'ratelimit:{user_id}'
+count = await redis.incr(key)
+if count == 1:
+    await redis.expire(key, 60)
+if count > 100:
+    raise HTTPException(status_code=429, detail='Too Many Requests')`,
+      },
+    ],
     realWorld:
       'API gateways (Kong, AWS API Gateway) and middleware like express-rate-limit enforce exactly this. Stripe and GitHub publish their rate limits and `Retry-After` headers built on the same token-bucket idea.',
   },
@@ -276,9 +367,10 @@ location /api/ {
     blurb: 'Repeated failures trip the breaker open, failing fast until a trial request succeeds again.',
     tag: 'state machine',
     Component: CircuitBreaker,
-    code: {
-      lang: 'js',
-      snippet: `const breaker = new CircuitBreaker(callPaymentService, {
+    code: [
+      {
+        lang: 'js',
+        snippet: `const breaker = new CircuitBreaker(callPaymentService, {
   timeout: 3000,
   errorThresholdPercentage: 50,
   resetTimeout: 10000,
@@ -286,7 +378,21 @@ location /api/ {
 breaker.fallback(() => ({ status: 'queued for retry' }))
 
 const result = await breaker.fire(order)`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `breaker = pybreaker.CircuitBreaker(fail_max=5, reset_timeout=10)
+
+@breaker
+def call_payment_service(order):
+    return payment_client.charge(order)
+
+try:
+    result = call_payment_service(order)
+except pybreaker.CircuitBreakerError:
+    result = {'status': 'queued for retry'}`,
+      },
+    ],
     realWorld:
       'resilience4j (Java) and opossum (Node.js) — successors to Netflix\'s original Hystrix — wrap exactly this pattern around calls to flaky downstream services, so one slow dependency doesn\'t take down the whole request pipeline.',
   },
@@ -296,15 +402,26 @@ const result = await breaker.fire(order)`,
     blurb: 'A compact bit array that can say "definitely not present" or "maybe present" — never a false negative.',
     tag: 'hashing',
     Component: BloomFilter,
-    code: {
-      lang: 'js',
-      snippet: `const filter = new BloomFilter(1_000_000, 4) // ~1M items, 4 hash fns
+    code: [
+      {
+        lang: 'js',
+        snippet: `const filter = new BloomFilter(1_000_000, 4) // ~1M items, 4 hash fns
 filter.add(email)
 
 if (!filter.has(email)) {
   // definitely new — safe to skip an expensive DB lookup
 }`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `bf = BloomFilter(capacity=1_000_000, error_rate=0.001)
+bf.add(email)
+
+if email not in bf:
+    # definitely new — safe to skip an expensive DB lookup
+    pass`,
+      },
+    ],
     realWorld:
       'Chrome\'s Safe Browsing list, Medium\'s "already read this" tracking, and Cassandra/HBase all use a Bloom filter to cheaply skip a disk read when they can prove something isn\'t there.',
   },
@@ -314,11 +431,18 @@ if (!filter.has(email)) {
     blurb: 'Snowflake IDs pack a timestamp, machine id, and sequence into one sortable 64-bit number.',
     tag: 'bit-packing',
     Component: SnowflakeId,
-    code: {
-      lang: 'js',
-      snippet: `const generator = new Snowflake({ machineId: 3, epoch: 1704067200000 })
+    code: [
+      {
+        lang: 'js',
+        snippet: `const generator = new Snowflake({ machineId: 3, epoch: 1704067200000 })
 const id = generator.nextId() // e.g. 7123456789012345n — sortable by creation time`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `generator = Snowflake(machine_id=3, epoch=1704067200000)
+id = generator.next_id()  # e.g. 7123456789012345 — sortable by creation time`,
+      },
+    ],
     realWorld:
       'Twitter\'s original Snowflake service, Discord message IDs, and Instagram\'s sharded ID generator all use this scheme so every service instance can mint globally-unique, roughly-time-ordered IDs with zero coordination.',
   },
@@ -328,16 +452,27 @@ const id = generator.nextId() // e.g. 7123456789012345n — sortable by creation
     blurb: 'Only one client holds the lock at a time; others queue until it is released.',
     tag: 'mutex',
     Component: DistributedLock,
-    code: {
-      lang: 'js',
-      snippet: `// Redlock pattern against Redis
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Redlock pattern against Redis
 const lock = await redlock.acquire([\`lock:invoice:\${id}\`], 5000)
 try {
   await processInvoice(id)
 } finally {
   await lock.release()
 }`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Redlock pattern against Redis
+lock = redlock.lock(f'lock:invoice:{id}', ttl=5000)
+try:
+    process_invoice(id)
+finally:
+    redlock.unlock(lock)`,
+      },
+    ],
     realWorld:
       'Preventing a payment webhook that got delivered twice from double-charging a customer, or electing a single leader among several instances of a scheduled job so it doesn\'t run N times at once.',
   },
@@ -364,16 +499,28 @@ CREATE INDEX idx_orders_user_id ON orders (user_id);
     blurb: 'Three ways a client stays updated, from repeated round trips to one open connection.',
     tag: 'gsap',
     Component: WebSocketVsPollingVsSse,
-    code: {
-      lang: 'js',
-      snippet: `// Server-Sent Events endpoint
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Server-Sent Events endpoint
 app.get('/events', (req, res) => {
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
   const send = (data) => res.write(\`data: \${JSON.stringify(data)}\\n\\n\`)
   bus.on('update', send)
   req.on('close', () => bus.off('update', send))
 })`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Server-Sent Events endpoint
+@app.get('/events')
+async def events():
+    async def stream():
+        async for update in bus.subscribe('update'):
+            yield f'data: {json.dumps(update)}\\n\\n'
+    return StreamingResponse(stream(), media_type='text/event-stream')`,
+      },
+    ],
     realWorld:
       'Slack and Discord use WebSockets for chat (bidirectional, low latency). Live dashboards and stock tickers often use SSE (server-only push, simpler than WebSocket). A basic "check for new notifications" widget is usually just polling.',
   },
@@ -402,12 +549,20 @@ routes:
     blurb: 'Weak, eventual, and strong consistency differ in whether a read right after a write sees it.',
     tag: 'gsap',
     Component: ConsistencyPatterns,
-    code: {
-      lang: 'js',
-      snippet: `// DynamoDB: consistency is a per-read parameter
+    code: [
+      {
+        lang: 'js',
+        snippet: `// DynamoDB: consistency is a per-read parameter
 await dynamo.get({ TableName, Key, ConsistentRead: false }) // eventual (default, cheaper)
 await dynamo.get({ TableName, Key, ConsistentRead: true })  // strong (costs more, always fresh)`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# DynamoDB: consistency is a per-read parameter
+table.get_item(Key=key, ConsistentRead=False)  # eventual (default, cheaper)
+table.get_item(Key=key, ConsistentRead=True)   # strong (costs more, always fresh)`,
+      },
+    ],
     realWorld:
       'DynamoDB\'s `ConsistentRead` flag and MongoDB\'s read/write concern levels expose this exact tradeoff directly in the client API, per query.',
   },
@@ -432,15 +587,26 @@ MultiAZ: true # standby in another AZ, promoted automatically on primary failure
     blurb: 'A pooling proxy multiplexes many app connections onto a few real DB connections, and hides failover from clients.',
     tag: 'state machine',
     Component: RdsProxy,
-    code: {
-      lang: 'js',
-      snippet: `// Lambda connects to the proxy endpoint, not the DB directly —
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Lambda connects to the proxy endpoint, not the DB directly —
 // the proxy holds a small pool of real Postgres connections open
 // and reuses them across thousands of short-lived invocations
 const client = new Client({ host: 'myapp.proxy-abc123.us-east-1.rds.amazonaws.com' })
 await client.connect()
 await client.query('SELECT * FROM orders WHERE id = $1', [id])`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Lambda connects to the proxy endpoint, not the DB directly —
+# the proxy holds a small pool of real Postgres connections open
+# and reuses them across thousands of short-lived invocations
+conn = psycopg2.connect(host='myapp.proxy-abc123.us-east-1.rds.amazonaws.com')
+cur = conn.cursor()
+cur.execute('SELECT * FROM orders WHERE id = %s', (id,))`,
+      },
+    ],
     realWorld:
       'AWS RDS Proxy sitting in front of a Lambda-triggered API so a traffic spike opens thousands of function invocations without each one grabbing (and exhausting) a raw Postgres connection, and so a Multi-AZ failover reconnects the pool instead of erroring out every client at once.',
   },
@@ -481,13 +647,22 @@ SET GLOBAL auto_increment_offset = 1; -- node 1: 1,3,5…  node 2: 2,4,6…`,
     blurb: 'Splitting one database into several by function trades cross-table joins for independent scaling.',
     tag: 'framer-motion',
     Component: Federation,
-    code: {
-      lang: 'js',
-      snippet: `// Two separate connection pools — the join now happens in app code
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Two separate connection pools — the join now happens in app code
 const user = await usersDb.query('SELECT * FROM users WHERE id = $1', [id])
 const orders = await ordersDb.query('SELECT * FROM orders WHERE user_id = $1', [id])
 return { ...user, orders }`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Two separate connection pools — the join now happens in app code
+user = await users_db.fetch_one('SELECT * FROM users WHERE id = $1', id)
+orders = await orders_db.fetch_all('SELECT * FROM orders WHERE user_id = $1', id)
+return {**user, 'orders': orders}`,
+      },
+    ],
     realWorld:
       'The standard first step when splitting a monolith into microservices: give "users", "orders", and "products" their own databases along service boundaries before splitting the application code itself.',
   },
@@ -512,14 +687,24 @@ ALTER TABLE orders ADD COLUMN customer_name text;`,
     blurb: 'The same record shaped four ways: key-value, document, wide-column, and graph.',
     tag: 'compare',
     Component: NoSqlDataModels,
-    code: {
-      lang: 'js',
-      snippet: `// Document (MongoDB)
+    code: [
+      {
+        lang: 'js',
+        snippet: `// Document (MongoDB)
 db.users.insertOne({ _id: 1, name: 'Ada', tags: ['admin'] })
 
 // Key-value (Redis)
 await redis.set('user:1', JSON.stringify({ name: 'Ada' }))`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# Document (MongoDB)
+db.users.insert_one({'_id': 1, 'name': 'Ada', 'tags': ['admin']})
+
+# Key-value (Redis)
+await redis.set('user:1', json.dumps({'name': 'Ada'}))`,
+      },
+    ],
     realWorld:
       'MongoDB for flexible product catalogs, Redis for sessions/cache, Cassandra for write-heavy time-series data, Neo4j for fraud rings and recommendation graphs — picking the model to fit the access pattern.',
   },
@@ -529,16 +714,28 @@ await redis.set('user:1', JSON.stringify({ name: 'Ada' }))`,
     blurb: 'Cache-aside, write-through, write-behind, and refresh-ahead move data between cache and DB differently.',
     tag: 'gsap',
     Component: CacheWriteStrategies,
-    code: {
-      lang: 'js',
-      snippet: `// write-through: never inconsistent, slower writes
+    code: [
+      {
+        lang: 'js',
+        snippet: `// write-through: never inconsistent, slower writes
 await cache.set(key, value)
 await db.write(key, value)
 
 // write-behind: instant ack, DB catches up async
 await cache.set(key, value)
 flushQueue.push({ key, value })`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `# write-through: never inconsistent, slower writes
+await cache.set(key, value)
+await db.write(key, value)
+
+# write-behind: instant ack, DB catches up async
+await cache.set(key, value)
+flush_queue.append({'key': key, 'value': value})`,
+      },
+    ],
     realWorld:
       'Write-through for anything financial (never allowed to be stale). Write-behind for high-throughput counters like "likes" or view counts, where losing the last few increments on a crash is an acceptable tradeoff for speed.',
   },
@@ -548,13 +745,27 @@ flushQueue.push({ key, value })`,
     blurb: 'A worker pool drains a bounded queue; once it is full, new submissions are rejected outright.',
     tag: 'three.js',
     Component: TaskQueueBackPressure,
-    code: {
-      lang: 'js',
-      snippet: `const queue = new Queue('image-resize', { redis, defaultJobOptions: { attempts: 3 } })
+    code: [
+      {
+        lang: 'js',
+        snippet: `const queue = new Queue('image-resize', { redis, defaultJobOptions: { attempts: 3 } })
 queue.process(5, async (job) => resizeImage(job.data)) // 5 concurrent workers
 
 await queue.add(uploadData) // rejects/backs off once the queue is saturated`,
-    },
+      },
+      {
+        lang: 'python',
+        snippet: `app = Celery('image-resize', broker='redis://localhost')
+app.conf.worker_concurrency = 5  # 5 concurrent workers
+app.conf.task_acks_late = True
+
+@app.task(max_retries=3)
+def resize_image(data):
+    ...
+
+resize_image.delay(upload_data)  # backs off once the queue is saturated`,
+      },
+    ],
     realWorld:
       'Sidekiq (Ruby), BullMQ (Node), and Celery (Python) all implement this: a bounded job queue with a worker pool for uploads, emails, and report generation, with back pressure to stop the queue from growing unbounded under load.',
   },
