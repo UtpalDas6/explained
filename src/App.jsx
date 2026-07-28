@@ -8,10 +8,11 @@ import { gitConcepts } from './data/gitConcepts.js'
 import { apiConcepts } from './data/apiConcepts.js'
 import { dbConcepts } from './data/dbConcepts.js'
 import { aiConcepts } from './data/aiConcepts.js'
+import { cloudConcepts } from './data/cloudConcepts.js'
 import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
-const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts, ...gitConcepts, ...apiConcepts, ...dbConcepts, ...aiConcepts]
+const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts, ...gitConcepts, ...apiConcepts, ...dbConcepts, ...aiConcepts, ...cloudConcepts]
 
 const MODES = {
   systems: { label: 'Systems', brand: '/systems', heading: 'System design, visualized', sub: 'Pick a concept to see it move.' },
@@ -22,6 +23,7 @@ const MODES = {
   api: { label: 'API Design', brand: '/api', heading: 'API design principles, visualized', sub: 'Pick a principle to see the bad practice, then see the fix.' },
   db: { label: 'Databases', brand: '/db', heading: 'SQL & NoSQL, visualized', sub: 'Pick a topic to see it compared, then see why it matters.' },
   ai: { label: 'AI Integration', brand: '/ai', heading: 'AI integration, visualized', sub: 'From LLMs and RAG to agents and the frontier — pick a topic to see it compared.' },
+  cloud: { label: 'Cloud', brand: '/cloud', heading: 'Cloud computing, visualized', sub: 'From compute and storage to reliability and cost — pick a topic to see it compared.' },
 }
 
 // A single code entry ({ lang, snippet }) renders one block as before; an
