@@ -92,7 +92,10 @@ export const cloudConcepts = [
         after: 'The function only exists for the duration of each invocation — billing tracks only the milliseconds actually used.',
       },
     }),
-    code: [{ lang: 'js', snippet: `// handler.js\nexports.handler = async (event) => {\n  return { statusCode: 200, body: \`Hello, \${event.name}\` };\n};\n// deployed as a Lambda function, triggered by API Gateway/events` }],
+    code: [
+      { lang: 'js', snippet: `// handler.js\nexports.handler = async (event) => {\n  return { statusCode: 200, body: \`Hello, \${event.name}\` };\n};\n// deployed as a Lambda function, triggered by API Gateway/events` },
+      { lang: 'python', snippet: `# handler.py\ndef handler(event, context):\n    return {"statusCode": 200, "body": f"Hello, {event['name']}"}\n# deployed as a Lambda function, triggered by API Gateway/events` },
+    ],
     realWorld:
       'Image thumbnail generation on upload, webhook processing, and bursty/unpredictable-traffic APIs are classic serverless cases — cost and scaling both track actual usage automatically.',
     pitfall:
@@ -368,7 +371,10 @@ export const cloudConcepts = [
         after: "The application fetches the current secret value at runtime from a dedicated service — it's never written to a file or committed.",
       },
     }),
-    code: [{ lang: 'python', snippet: `secret = secrets_manager.get_secret_value(SecretId="prod/db-password")\ndb.connect(password=secret["SecretString"])` }],
+    code: [
+      { lang: 'js', snippet: `const secret = await secretsManager.getSecretValue({ SecretId: 'prod/db-password' })\ndb.connect({ password: secret.SecretString })` },
+      { lang: 'python', snippet: `secret = secrets_manager.get_secret_value(SecretId="prod/db-password")\ndb.connect(password=secret["SecretString"])` },
+    ],
     realWorld:
       'AWS Secrets Manager, HashiCorp Vault, and GCP Secret Manager centralize storage with access control, audit logs, and automatic rotation, instead of secrets scattered across config files.',
     pitfall:
@@ -644,7 +650,10 @@ export const cloudConcepts = [
         after: "A shared trace id links every service's span of the same request — the exact hop that took 340ms is immediately visible.",
       },
     }),
-    code: [{ lang: 'python', snippet: `with tracer.start_span("db_query", parent=current_span):\n    result = db.query(sql)\n# every span shares the request's trace_id, stitched together in the trace UI` }],
+    code: [
+      { lang: 'js', snippet: `const span = tracer.startSpan('db_query', { parent: currentSpan })\nconst result = await db.query(sql)\nspan.end()\n// every span shares the request's trace_id, stitched together in the trace UI` },
+      { lang: 'python', snippet: `with tracer.start_span("db_query", parent=current_span):\n    result = db.query(sql)\n# every span shares the request's trace_id, stitched together in the trace UI` },
+    ],
     realWorld:
       'Jaeger, Zipkin, and Datadog APM all implement this — any microservices architecture beyond a couple of services needs distributed tracing, since a request routinely crosses five or more boundaries.',
     pitfall:

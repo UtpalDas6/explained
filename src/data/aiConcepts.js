@@ -23,7 +23,10 @@ export const aiConcepts = [
         after: 'Each generated token becomes part of the input for predicting the next one — an LLM is fundamentally one operation, applied repeatedly.',
       },
     }),
-    code: [{ lang: 'python', snippet: `response = llm.generate(\n    prompt="The capital of France is",\n    max_tokens=5,\n)\n# "Paris" — produced one token at a time, each conditioned on everything before it` }],
+    code: [
+      { lang: 'js', snippet: `const response = await llm.generate({\n  prompt: 'The capital of France is',\n  maxTokens: 5,\n})\n// "Paris" — produced one token at a time, each conditioned on everything before it` },
+      { lang: 'python', snippet: `response = llm.generate(\n    prompt="The capital of France is",\n    max_tokens=5,\n)\n# "Paris" — produced one token at a time, each conditioned on everything before it` },
+    ],
     realWorld:
       'GPT, Claude, Gemini, and Llama all share this same core mechanism — a single next-token-prediction model, scaled up and fine-tuned into something that can hold a conversation, write code, or reason step by step.',
     pitfall:
@@ -46,7 +49,10 @@ export const aiConcepts = [
         after: 'A small, distilled model handles the same narrow task locally — instant and free to run, at the cost of general capability outside that task.',
       },
     }),
-    code: [{ lang: 'python', snippet: `# frontier model: broad capability, real latency + cost per call\nresult = big_llm.generate(prompt)\n\n# distilled small model: narrow task, runs on-device, near-zero latency\nresult = phi3_mini.generate(prompt)  # e.g. Phi-3, Gemma 2B, on a phone` }],
+    code: [
+      { lang: 'js', snippet: `// frontier model: broad capability, real latency + cost per call\nconst result = await bigLlm.generate(prompt)\n\n// distilled small model: narrow task, runs on-device, near-zero latency\nconst result2 = await phi3Mini.generate(prompt)  // e.g. Phi-3, Gemma 2B, on a phone` },
+      { lang: 'python', snippet: `# frontier model: broad capability, real latency + cost per call\nresult = big_llm.generate(prompt)\n\n# distilled small model: narrow task, runs on-device, near-zero latency\nresult = phi3_mini.generate(prompt)  # e.g. Phi-3, Gemma 2B, on a phone` },
+    ],
     realWorld:
       "On-device autocomplete, offline voice assistants, and latency-critical classification (spam filtering, intent detection) all reach for an SLM instead of round-tripping to a frontier model for a task that doesn't need one.",
     pitfall:
@@ -69,7 +75,10 @@ export const aiConcepts = [
         after: "Pushing past the limit means either an outright error, or silent truncation — the model loses access to whatever got cut, with no warning in its own output.",
       },
     }),
-    code: [{ lang: 'python', snippet: `response = llm.generate(\n    messages=conversation_history,  # must total <= context_window tokens\n    max_tokens=1000,\n)\n# if tokens(conversation_history) + max_tokens > context_window: error` }],
+    code: [
+      { lang: 'js', snippet: `const response = await llm.generate({\n  messages: conversationHistory,  // must total <= context_window tokens\n  maxTokens: 1000,\n})\n// if tokens(conversationHistory) + maxTokens > contextWindow: error` },
+      { lang: 'python', snippet: `response = llm.generate(\n    messages=conversation_history,  # must total <= context_window tokens\n    max_tokens=1000,\n)\n# if tokens(conversation_history) + max_tokens > context_window: error` },
+    ],
     realWorld:
       'Long-running chat assistants and agents that accumulate tool outputs over many steps both run into this constantly — a context window that looked generous at the start of a session can fill up fast.',
     pitfall:
@@ -92,7 +101,10 @@ export const aiConcepts = [
         after: 'The tokenizer splits it into sub-word pieces it has actually seen during training — word count and token count are two different numbers.',
       },
     }),
-    code: [{ lang: 'python', snippet: `tokens = tokenizer.encode("unbelievable")\n# ["un", "believ", "able"]  -> 3 tokens, not 1\nlen(tokens)  # this is what counts against the context window and the bill` }],
+    code: [
+      { lang: 'js', snippet: `const tokens = tokenizer.encode('unbelievable')\n// ["un", "believ", "able"]  -> 3 tokens, not 1\ntokens.length  // this is what counts against the context window and the bill` },
+      { lang: 'python', snippet: `tokens = tokenizer.encode("unbelievable")\n# ["un", "believ", "able"]  -> 3 tokens, not 1\nlen(tokens)  # this is what counts against the context window and the bill` },
+    ],
     realWorld:
       'API pricing, rate limits, and context window limits are all denominated in tokens, not words or characters — a rough rule of thumb (1 token ≈ 4 characters of English) is why cost estimates are given in tokens.',
     pitfall:
@@ -115,7 +127,10 @@ export const aiConcepts = [
         after: 'The model has learned the pattern from training examples directly — the same behavior with a much shorter (or empty) prompt.',
       },
     }),
-    code: [{ lang: 'python', snippet: `# Prompting: examples sent on every call\nprompt = few_shot_examples + "\\n\\n" + user_input\n\n# Fine-tuning: examples trained in once\nfine_tuned_model = client.fine_tune(base_model="gpt-4o-mini", training_file=examples)\nresponse = fine_tuned_model.generate(user_input)  # no examples needed anymore` }],
+    code: [
+      { lang: 'js', snippet: `// Prompting: examples sent on every call\nconst prompt = fewShotExamples + '\\n\\n' + userInput\n\n// Fine-tuning: examples trained in once\nconst fineTunedModel = await client.fineTune({ baseModel: 'gpt-4o-mini', trainingFile: examples })\nconst response = await fineTunedModel.generate(userInput)  // no examples needed anymore` },
+      { lang: 'python', snippet: `# Prompting: examples sent on every call\nprompt = few_shot_examples + "\\n\\n" + user_input\n\n# Fine-tuning: examples trained in once\nfine_tuned_model = client.fine_tune(base_model="gpt-4o-mini", training_file=examples)\nresponse = fine_tuned_model.generate(user_input)  # no examples needed anymore` },
+    ],
     realWorld:
       "A customer-support bot that must always reply in a strict JSON schema, in the brand's exact tone, is a common fine-tuning case — prompting is enough for most one-off or evolving-requirements use cases.",
     pitfall:
@@ -138,7 +153,10 @@ export const aiConcepts = [
         after: 'Quantized weights take a quarter of the space — the model runs on much cheaper hardware, at a small, usually acceptable, accuracy cost.',
       },
     }),
-    code: [{ lang: 'python', snippet: `model = AutoModelForCausalLM.from_pretrained(\n    "meta-llama/Llama-3-70b",\n    quantization_config=BitsAndBytesConfig(load_in_4bit=True),\n)\n# ~4x smaller memory footprint, minor accuracy tradeoff` }],
+    code: [
+      { lang: 'js', snippet: `const model = await loadModel('meta-llama/Llama-3-70b', {\n  quantization: { bits: 4 },\n})\n// ~4x smaller memory footprint, minor accuracy tradeoff` },
+      { lang: 'python', snippet: `model = AutoModelForCausalLM.from_pretrained(\n    "meta-llama/Llama-3-70b",\n    quantization_config=BitsAndBytesConfig(load_in_4bit=True),\n)\n# ~4x smaller memory footprint, minor accuracy tradeoff` },
+    ],
     realWorld:
       "Running a 70B-parameter model on a single consumer GPU, or an LLM on a phone at all, is only possible because of quantization — full-precision weights simply wouldn't fit.",
     pitfall:
@@ -161,7 +179,10 @@ export const aiConcepts = [
         after: 'As vectors, semantically similar text lands close together in the embedding space — distance now measures meaning, not spelling.',
       },
     }),
-    code: [{ lang: 'python', snippet: `vector = embedding_model.embed("a happy dog")\n# [0.12, -0.87, 0.33, ...] -- a point in high-dimensional space\n\nsimilarity = cosine_similarity(\n    embedding_model.embed("a happy dog"),\n    embedding_model.embed("a joyful puppy"),\n)  # high — close in meaning, despite sharing no words` }],
+    code: [
+      { lang: 'js', snippet: `const vector = await embeddingModel.embed('a happy dog')\n// [0.12, -0.87, 0.33, ...] -- a point in high-dimensional space\n\nconst similarity = cosineSimilarity(\n  await embeddingModel.embed('a happy dog'),\n  await embeddingModel.embed('a joyful puppy'),\n)  // high — close in meaning, despite sharing no words` },
+      { lang: 'python', snippet: `vector = embedding_model.embed("a happy dog")\n# [0.12, -0.87, 0.33, ...] -- a point in high-dimensional space\n\nsimilarity = cosine_similarity(\n    embedding_model.embed("a happy dog"),\n    embedding_model.embed("a joyful puppy"),\n)  # high — close in meaning, despite sharing no words` },
+    ],
     realWorld:
       '"Customers who liked this also liked...", semantic search, and duplicate detection all rely on embeddings — comparing meaning instead of exact keyword matches.',
     pitfall:
@@ -184,7 +205,10 @@ export const aiConcepts = [
         after: 'A purpose-built index finds the (approximately) closest matches in milliseconds — trading a small amount of recall for a massive speedup.',
       },
     }),
-    code: [{ lang: 'python', snippet: `db = VectorDB.connect("orders-index")\nresults = db.query(\n    vector=embedding_model.embed("wireless noise-cancelling headphones"),\n    top_k=10,\n)` }],
+    code: [
+      { lang: 'js', snippet: `const db = await VectorDB.connect('orders-index')\nconst results = await db.query({\n  vector: await embeddingModel.embed('wireless noise-cancelling headphones'),\n  topK: 10,\n})` },
+      { lang: 'python', snippet: `db = VectorDB.connect("orders-index")\nresults = db.query(\n    vector=embedding_model.embed("wireless noise-cancelling headphones"),\n    top_k=10,\n)` },
+    ],
     realWorld:
       'Pinecone, Weaviate, pgvector, and Qdrant all exist specifically to make similarity search over millions of embeddings fast enough to sit in the critical path of a user request.',
     pitfall:
@@ -207,7 +231,10 @@ export const aiConcepts = [
         after: 'An approximate index reaches a near-optimal answer by hopping through a small number of nodes instead of checking everything — vastly faster, occasionally missing the true best match.',
       },
     }),
-    code: [{ lang: 'python', snippet: `index = hnswlib.Index(space='cosine', dim=1536)\nindex.init_index(max_elements=10_000_000, ef_construction=200, M=16)\nindex.add_items(vectors, ids)\n\nlabels, distances = index.knn_query(query_vector, k=10)  # approximate, fast` }],
+    code: [
+      { lang: 'js', snippet: `const index = new HierarchicalNSW('cosine', 1536)\nindex.initIndex(10_000_000, 200, 16)  // maxElements, efConstruction, M\nindex.addItems(vectors, ids)\n\nconst { neighbors, distances } = index.searchKnn(queryVector, 10)  // approximate, fast` },
+      { lang: 'python', snippet: `index = hnswlib.Index(space='cosine', dim=1536)\nindex.init_index(max_elements=10_000_000, ef_construction=200, M=16)\nindex.add_items(vectors, ids)\n\nlabels, distances = index.knn_query(query_vector, k=10)  # approximate, fast` },
+    ],
     realWorld:
       "Every production-scale vector database (Pinecone, Milvus, pgvector's HNSW index) uses ANN under the hood — exact search doesn't scale to millions or billions of vectors.",
     pitfall:
@@ -230,7 +257,10 @@ export const aiConcepts = [
         after: 'Chunking along natural document boundaries keeps each piece self-contained and retrievable as a coherent unit on its own.',
       },
     }),
-    code: [{ lang: 'python', snippet: `# Bad: arbitrary character count, ignores structure\nchunks = [text[i:i+500] for i in range(0, len(text), 500)]\n\n# Good: split along semantic boundaries\nchunks = markdown_splitter.split(text, by=["heading", "paragraph"])` }],
+    code: [
+      { lang: 'js', snippet: `// Bad: arbitrary character count, ignores structure\nconst chunks = []\nfor (let i = 0; i < text.length; i += 500) chunks.push(text.slice(i, i + 500))\n\n// Good: split along semantic boundaries\nconst chunks2 = markdownSplitter.split(text, { by: ['heading', 'paragraph'] })` },
+      { lang: 'python', snippet: `# Bad: arbitrary character count, ignores structure\nchunks = [text[i:i+500] for i in range(0, len(text), 500)]\n\n# Good: split along semantic boundaries\nchunks = markdown_splitter.split(text, by=["heading", "paragraph"])` },
+    ],
     realWorld:
       'RAG systems live or die on chunking quality — a well-chunked knowledge base retrieves the exact right paragraph; a poorly-chunked one retrieves fragments that half-answer the question.',
     pitfall:
@@ -253,7 +283,10 @@ export const aiConcepts = [
         after: "Keyword search catches the exact term; vector search catches paraphrases and synonyms — combined, results cover both cases.",
       },
     }),
-    code: [{ lang: 'python', snippet: `keyword_results = bm25_index.search("SKU-4471", top_k=20)\nvector_results = vector_db.query(embed("SKU-4471"), top_k=20)\nresults = reciprocal_rank_fusion(keyword_results, vector_results)` }],
+    code: [
+      { lang: 'js', snippet: `const keywordResults = await bm25Index.search('SKU-4471', { topK: 20 })\nconst vectorResults = await vectorDb.query(await embed('SKU-4471'), { topK: 20 })\nconst results = reciprocalRankFusion(keywordResults, vectorResults)` },
+      { lang: 'python', snippet: `keyword_results = bm25_index.search("SKU-4471", top_k=20)\nvector_results = vector_db.query(embed("SKU-4471"), top_k=20)\nresults = reciprocal_rank_fusion(keyword_results, vector_results)` },
+    ],
     realWorld:
       'E-commerce search and enterprise document search both need hybrid — a customer might search by exact product code or by a vague description, and only one search type handles each well.',
     pitfall:
@@ -276,7 +309,10 @@ export const aiConcepts = [
         after: "The actual, current policy document is fetched and placed in the prompt — the model's answer is generated from real source material.",
       },
     }),
-    code: [{ lang: 'python', snippet: `docs = vector_db.query(embed(user_question), top_k=5)\nprompt = f"Answer using only this context:\\n{docs}\\n\\nQuestion: {user_question}"\nanswer = llm.generate(prompt)` }],
+    code: [
+      { lang: 'js', snippet: `const docs = await vectorDb.query(await embed(userQuestion), { topK: 5 })\nconst prompt = \`Answer using only this context:\\n\${docs}\\n\\nQuestion: \${userQuestion}\`\nconst answer = await llm.generate(prompt)` },
+      { lang: 'python', snippet: `docs = vector_db.query(embed(user_question), top_k=5)\nprompt = f"Answer using only this context:\\n{docs}\\n\\nQuestion: {user_question}"\nanswer = llm.generate(prompt)` },
+    ],
     realWorld:
       'Internal company chatbots, customer support over product docs, and legal/medical Q&A over a specific corpus are the textbook RAG use case — accurate answers a general-purpose model was never trained on.',
     pitfall:
@@ -299,7 +335,10 @@ export const aiConcepts = [
         after: 'A slower cross-encoder scores query and each candidate together, catching relevance signals the fast first pass missed.',
       },
     }),
-    code: [{ lang: 'python', snippet: `candidates = vector_db.query(embed(query), top_k=50)  # fast, approximate\nreranked = reranker_model.score(query, candidates)      # slower, precise\ntop_5 = reranked[:5]  # what actually goes into the prompt` }],
+    code: [
+      { lang: 'js', snippet: `const candidates = await vectorDb.query(await embed(query), { topK: 50 })  // fast, approximate\nconst reranked = await rerankerModel.score(query, candidates)                // slower, precise\nconst top5 = reranked.slice(0, 5)  // what actually goes into the prompt` },
+      { lang: 'python', snippet: `candidates = vector_db.query(embed(query), top_k=50)  # fast, approximate\nreranked = reranker_model.score(query, candidates)      # slower, precise\ntop_5 = reranked[:5]  # what actually goes into the prompt` },
+    ],
     realWorld:
       'Search engines and RAG pipelines both use a fast-then-precise two-stage pattern — cheap retrieval to get a shortlist, expensive reranking to get the shortlist right.',
     pitfall:
@@ -322,7 +361,10 @@ export const aiConcepts = [
         after: 'A direct pointer back to the exact source lets anyone verify the claim in seconds, and makes it obvious when the model has strayed from its sources.',
       },
     }),
-    code: [{ lang: 'python', snippet: `prompt = f"""Answer using ONLY the numbered sources below.\nCite the source number for every claim.\n\n[1] {doc1}\n[2] {doc2}\n\nQuestion: {question}"""\n# expects output like: "Refunds take 5-7 days [1]."` }],
+    code: [
+      { lang: 'js', snippet: `const prompt = \`Answer using ONLY the numbered sources below.\nCite the source number for every claim.\n\n[1] \${doc1}\n[2] \${doc2}\n\nQuestion: \${question}\`\n// expects output like: "Refunds take 5-7 days [1]."` },
+      { lang: 'python', snippet: `prompt = f"""Answer using ONLY the numbered sources below.\nCite the source number for every claim.\n\n[1] {doc1}\n[2] {doc2}\n\nQuestion: {question}"""\n# expects output like: "Refunds take 5-7 days [1]."` },
+    ],
     realWorld:
       "Legal and medical RAG applications require citations by necessity — an unverifiable claim in those domains isn't just unhelpful, it's a liability.",
     pitfall:
@@ -345,7 +387,10 @@ export const aiConcepts = [
         after: "Only the passages that actually answer the question get included — smaller prompt, faster response, undiluted attention.",
       },
     }),
-    code: [{ lang: 'python', snippet: `# Bad: stuff the whole manual in every time\nprompt = f"{entire_400_page_manual}\\n\\nQuestion: {question}"\n\n# Good: retrieve just what's relevant\nrelevant_chunks = vector_db.query(embed(question), top_k=3)\nprompt = f"{relevant_chunks}\\n\\nQuestion: {question}"` }],
+    code: [
+      { lang: 'js', snippet: `// Bad: stuff the whole manual in every time\nconst prompt = \`\${entire400PageManual}\\n\\nQuestion: \${question}\`\n\n// Good: retrieve just what's relevant\nconst relevantChunks = await vectorDb.query(await embed(question), { topK: 3 })\nconst prompt2 = \`\${relevantChunks}\\n\\nQuestion: \${question}\`` },
+      { lang: 'python', snippet: `# Bad: stuff the whole manual in every time\nprompt = f"{entire_400_page_manual}\\n\\nQuestion: {question}"\n\n# Good: retrieve just what's relevant\nrelevant_chunks = vector_db.query(embed(question), top_k=3)\nprompt = f"{relevant_chunks}\\n\\nQuestion: {question}"` },
+    ],
     realWorld:
       'A small FAQ (a few pages) is often fine stuffed directly into the prompt every time — RAG earns its complexity once the source material is too large to fit, or too large to search efficiently, every call.',
     pitfall:
@@ -391,7 +436,10 @@ export const aiConcepts = [
         after: "The graph traversal follows the actual chain of relationships across documents — the connection retrieval alone would have missed becomes explicit.",
       },
     }),
-    code: [{ lang: 'python', snippet: `path = knowledge_graph.find_path("Acme Corp", "suspect_x", max_hops=4)\n# Acme -> invested_in -> ShellCo -> owned_by -> suspect_x\n\nprompt = f"Explain this connection: {path}\\n\\nQuestion: {question}"\nanswer = llm.generate(prompt)` }],
+    code: [
+      { lang: 'js', snippet: `const path = await knowledgeGraph.findPath('Acme Corp', 'suspect_x', { maxHops: 4 })\n// Acme -> invested_in -> ShellCo -> owned_by -> suspect_x\n\nconst prompt = \`Explain this connection: \${path}\\n\\nQuestion: \${question}\`\nconst answer = await llm.generate(prompt)` },
+      { lang: 'python', snippet: `path = knowledge_graph.find_path("Acme Corp", "suspect_x", max_hops=4)\n# Acme -> invested_in -> ShellCo -> owned_by -> suspect_x\n\nprompt = f"Explain this connection: {path}\\n\\nQuestion: {question}"\nanswer = llm.generate(prompt)` },
+    ],
     realWorld:
       'Fraud investigation, drug interaction discovery, and "how are these two entities related" questions are cases plain vector RAG structurally can\'t answer, since the answer spans multiple linked documents.',
     pitfall:
@@ -414,7 +462,10 @@ export const aiConcepts = [
         after: 'Entity linking resolves every mention to one canonical node — now every fact attaches to the same underlying entity.',
       },
     }),
-    code: [{ lang: 'python', snippet: `entities = ner_model.extract("Apple reported strong earnings; AAPL rose 3%.")\n# [{"text": "Apple", "type": "ORG"}, {"text": "AAPL", "type": "TICKER"}]\n\ncanonical = entity_linker.resolve(entities)\n# both -> knowledge_graph.node("apple-inc")` }],
+    code: [
+      { lang: 'js', snippet: `const entities = await nerModel.extract('Apple reported strong earnings; AAPL rose 3%.')\n// [{ text: 'Apple', type: 'ORG' }, { text: 'AAPL', type: 'TICKER' }]\n\nconst canonical = await entityLinker.resolve(entities)\n// both -> knowledgeGraph.node('apple-inc')` },
+      { lang: 'python', snippet: `entities = ner_model.extract("Apple reported strong earnings; AAPL rose 3%.")\n# [{"text": "Apple", "type": "ORG"}, {"text": "AAPL", "type": "TICKER"}]\n\ncanonical = entity_linker.resolve(entities)\n# both -> knowledge_graph.node("apple-inc")` },
+    ],
     realWorld:
       'Building any knowledge graph from real-world text (news, financial filings, medical records) depends on entity linking — without it, the same real-world thing fragments into many disconnected nodes.',
     pitfall:
@@ -437,7 +488,10 @@ export const aiConcepts = [
         after: 'The model recognizes it needs live data, calls the real function, and generates its answer from the actual result.',
       },
     }),
-    code: [{ lang: 'python', snippet: `tools = [{"name": "get_weather", "parameters": {"city": "string"}}]\nresponse = llm.generate(prompt, tools=tools)\n# response: {"tool_call": "get_weather", "args": {"city": "Tokyo"}}\n\nresult = get_weather("Tokyo")  # real API call\nfinal_answer = llm.generate(prompt, tool_result=result)` }],
+    code: [
+      { lang: 'js', snippet: `const tools = [{ name: 'get_weather', parameters: { city: 'string' } }]\nconst response = await llm.generate(prompt, { tools })\n// response: { toolCall: 'get_weather', args: { city: 'Tokyo' } }\n\nconst result = await getWeather('Tokyo')  // real API call\nconst finalAnswer = await llm.generate(prompt, { toolResult: result })` },
+      { lang: 'python', snippet: `tools = [{"name": "get_weather", "parameters": {"city": "string"}}]\nresponse = llm.generate(prompt, tools=tools)\n# response: {"tool_call": "get_weather", "args": {"city": "Tokyo"}}\n\nresult = get_weather("Tokyo")  # real API call\nfinal_answer = llm.generate(prompt, tool_result=result)` },
+    ],
     realWorld:
       'Every modern agent — from a coding assistant that runs shell commands to a support bot that looks up an order status — is built on function calling.',
     pitfall:
@@ -483,7 +537,10 @@ export const aiConcepts = [
         after: "Each agent specializes narrowly and does its one job well — the planner's prompt is entirely about planning, the writer's entirely about writing.",
       },
     }),
-    code: [{ lang: 'python', snippet: `plan = planner_agent.run(task)\nresearch = researcher_agent.run(plan.research_questions)\ndraft = writer_agent.run(plan, research)\nfinal = reviewer_agent.run(draft, plan.requirements)` }],
+    code: [
+      { lang: 'js', snippet: `const plan = await plannerAgent.run(task)\nconst research = await researcherAgent.run(plan.researchQuestions)\nconst draft = await writerAgent.run(plan, research)\nconst final = await reviewerAgent.run(draft, plan.requirements)` },
+      { lang: 'python', snippet: `plan = planner_agent.run(task)\nresearch = researcher_agent.run(plan.research_questions)\ndraft = writer_agent.run(plan, research)\nfinal = reviewer_agent.run(draft, plan.requirements)` },
+    ],
     realWorld:
       'AI coding assistants that split into a "planning" pass and an "implementation" pass, or research tools with separate search and synthesis agents, use this specialize-and-collaborate structure.',
     pitfall:
@@ -506,7 +563,10 @@ export const aiConcepts = [
         after: "A specific fact was written to persistent storage — next time it's retrieved, so the agent doesn't have to re-learn it.",
       },
     }),
-    code: [{ lang: 'python', snippet: `# end of session: extract and persist durable facts\nmemory_store.save(user_id, fact="prefers concise answers, works in Python")\n\n# start of next session: retrieve relevant memories\nrelevant_memories = memory_store.retrieve(user_id, query=current_task)\nprompt = f"{relevant_memories}\\n\\n{current_task}"` }],
+    code: [
+      { lang: 'js', snippet: `// end of session: extract and persist durable facts\nawait memoryStore.save(userId, { fact: 'prefers concise answers, works in JS' })\n\n// start of next session: retrieve relevant memories\nconst relevantMemories = await memoryStore.retrieve(userId, { query: currentTask })\nconst prompt = \`\${relevantMemories}\\n\\n\${currentTask}\`` },
+      { lang: 'python', snippet: `# end of session: extract and persist durable facts\nmemory_store.save(user_id, fact="prefers concise answers, works in Python")\n\n# start of next session: retrieve relevant memories\nrelevant_memories = memory_store.retrieve(user_id, query=current_task)\nprompt = f"{relevant_memories}\\n\\n{current_task}"` },
+    ],
     realWorld:
       "Personal assistants that remember your preferences across conversations, and coding agents that recall a project's conventions session to session, both need long-term memory outside the ephemeral context window.",
     pitfall:
@@ -529,7 +589,10 @@ export const aiConcepts = [
         after: 'Broken into concrete steps, each is small enough to execute (and verify) independently.',
       },
     }),
-    code: [{ lang: 'python', snippet: `plan = planner.decompose("Launch the new feature")\n# ["Write code", "Add tests", "Update docs", "Deploy", "Monitor for errors"]\n\nfor step in plan:\n    result = executor.run(step)\n    if not result.success:\n        plan = planner.replan(remaining=plan, failure=result)` }],
+    code: [
+      { lang: 'js', snippet: `let plan = await planner.decompose('Launch the new feature')\n// ["Write code", "Add tests", "Update docs", "Deploy", "Monitor for errors"]\n\nfor (const step of plan) {\n  const result = await executor.run(step)\n  if (!result.success) {\n    plan = await planner.replan({ remaining: plan, failure: result })\n  }\n}` },
+      { lang: 'python', snippet: `plan = planner.decompose("Launch the new feature")\n# ["Write code", "Add tests", "Update docs", "Deploy", "Monitor for errors"]\n\nfor step in plan:\n    result = executor.run(step)\n    if not result.success:\n        plan = planner.replan(remaining=plan, failure=result)` },
+    ],
     realWorld:
       'Coding agents that break "add authentication" into "add user model, add login endpoint, add session middleware, add tests" rely on decomposition before execution.',
     pitfall:
@@ -552,7 +615,10 @@ export const aiConcepts = [
         after: "The loop has explicit success and failure exit conditions — it stops on its own, either because the task is done or a defined limit is hit.",
       },
     }),
-    code: [{ lang: 'python', snippet: `steps = 0\nwhile not task.is_complete() and steps < MAX_STEPS:\n    action = agent.decide(task.state)\n    result = execute(action)\n    task.update(result)\n    steps += 1\n\nif steps >= MAX_STEPS:\n    escalate_to_human(task)  # explicit failure path, not silent` }],
+    code: [
+      { lang: 'js', snippet: `let steps = 0\nwhile (!task.isComplete() && steps < MAX_STEPS) {\n  const action = agent.decide(task.state)\n  const result = execute(action)\n  task.update(result)\n  steps++\n}\n\nif (steps >= MAX_STEPS) {\n  escalateToHuman(task)  // explicit failure path, not silent\n}` },
+      { lang: 'python', snippet: `steps = 0\nwhile not task.is_complete() and steps < MAX_STEPS:\n    action = agent.decide(task.state)\n    result = execute(action)\n    task.update(result)\n    steps += 1\n\nif steps >= MAX_STEPS:\n    escalate_to_human(task)  # explicit failure path, not silent` },
+    ],
     realWorld:
       'Every production agent (a coding agent, a research agent, an automated support bot) needs this exact discipline — the difference between a demo that works once and a system safe to run unattended.',
     pitfall:
@@ -575,7 +641,10 @@ export const aiConcepts = [
         after: "Each step is a node, each transition an edge — branches, loops, and retries are visible in the graph's structure.",
       },
     }),
-    code: [{ lang: 'python', snippet: `graph = StateGraph()\ngraph.add_node("research", research_agent)\ngraph.add_node("draft", writer_agent)\ngraph.add_node("review", reviewer_agent)\ngraph.add_edge("research", "draft")\ngraph.add_conditional_edge("draft", lambda s: "review" if s.needs_review else "publish")\ngraph.add_edge("review", "draft")  # loop back on rejection` }],
+    code: [
+      { lang: 'js', snippet: `const graph = new StateGraph()\ngraph.addNode('research', researchAgent)\ngraph.addNode('draft', writerAgent)\ngraph.addNode('review', reviewerAgent)\ngraph.addEdge('research', 'draft')\ngraph.addConditionalEdge('draft', (s) => (s.needsReview ? 'review' : 'publish'))\ngraph.addEdge('review', 'draft')  // loop back on rejection` },
+      { lang: 'python', snippet: `graph = StateGraph()\ngraph.add_node("research", research_agent)\ngraph.add_node("draft", writer_agent)\ngraph.add_node("review", reviewer_agent)\ngraph.add_edge("research", "draft")\ngraph.add_conditional_edge("draft", lambda s: "review" if s.needs_review else "publish")\ngraph.add_edge("review", "draft")  # loop back on rejection` },
+    ],
     realWorld:
       'Frameworks like LangGraph model agent workflows exactly this way — a graph of steps with conditional edges is how a "revise until approved" loop stays legible as it grows.',
     pitfall:
@@ -598,7 +667,10 @@ export const aiConcepts = [
         after: 'The agent proposes the action but a human confirms it first — a wrong decision gets caught before it takes effect.',
       },
     }),
-    code: [{ lang: 'python', snippet: `if action.risk_level == "high":\n    approval = request_human_approval(action)\n    if not approval.granted:\n        return agent.replan(rejected=action, reason=approval.reason)\nexecute(action)` }],
+    code: [
+      { lang: 'js', snippet: `if (action.riskLevel === 'high') {\n  const approval = await requestHumanApproval(action)\n  if (!approval.granted) {\n    return agent.replan({ rejected: action, reason: approval.reason })\n  }\n}\nexecute(action)` },
+      { lang: 'python', snippet: `if action.risk_level == "high":\n    approval = request_human_approval(action)\n    if not approval.granted:\n        return agent.replan(rejected=action, reason=approval.reason)\nexecute(action)` },
+    ],
     realWorld:
       'Financial transactions, production deployments, and any agent action that sends external communication commonly gate on human approval — the cost of a wrong autonomous action is too high.',
     pitfall:
@@ -621,7 +693,10 @@ export const aiConcepts = [
         after: 'A standing set of test cases gives a concrete, comparable number before and after every change — a regression is caught immediately.',
       },
     }),
-    code: [{ lang: 'python', snippet: `eval_cases = load_eval_set("customer_support_v1.jsonl")  # 200 labeled examples\nresults = [agent.run(case.input) == case.expected for case in eval_cases]\naccuracy = sum(results) / len(results)\nassert accuracy >= 0.90, "regression — do not ship"` }],
+    code: [
+      { lang: 'js', snippet: `const evalCases = loadEvalSet('customer_support_v1.jsonl')  // 200 labeled examples\nconst results = evalCases.map((c) => agent.run(c.input) === c.expected)\nconst accuracy = results.filter(Boolean).length / results.length\nif (accuracy < 0.90) throw new Error('regression — do not ship')` },
+      { lang: 'python', snippet: `eval_cases = load_eval_set("customer_support_v1.jsonl")  # 200 labeled examples\nresults = [agent.run(case.input) == case.expected for case in eval_cases]\naccuracy = sum(results) / len(results)\nassert accuracy >= 0.90, "regression — do not ship"` },
+    ],
     realWorld:
       'Every serious LLM application team maintains an eval suite the same way a software team maintains unit tests — the only real defense against a prompt that "felt better" but regressed.',
     pitfall:

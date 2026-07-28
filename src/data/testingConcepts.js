@@ -23,7 +23,10 @@ export const testingConcepts = [
         after: 'Calling the function directly with plain inputs isolates exactly one unit of logic — a failure points at exactly one thing.',
       },
     }),
-    code: [{ lang: 'js', snippet: `test('calculateTotal sums line items', () => {\n  expect(calculateTotal([{price: 10, qty: 2}, {price: 5, qty: 1}])).toBe(25)\n})` }],
+    code: [
+      { lang: 'js', snippet: `test('calculateTotal sums line items', () => {\n  expect(calculateTotal([{price: 10, qty: 2}, {price: 5, qty: 1}])).toBe(25)\n})` },
+      { lang: 'python', snippet: `def test_calculate_total_sums_line_items():\n    assert calculate_total([{"price": 10, "qty": 2}, {"price": 5, "qty": 1}]) == 25` },
+    ],
     realWorld:
       "The base of the testing pyramid — thousands of unit tests running in seconds is what makes a large codebase's test suite fast enough to run on every save.",
     pitfall:
@@ -46,7 +49,10 @@ export const testingConcepts = [
         after: 'Running against a real (test) database catches exactly the class of bug unit tests structurally cannot.',
       },
     }),
-    code: [{ lang: 'js', snippet: `test('saveOrder persists to the database', async () => {\n  await saveOrder(testDb, { item: 'widget', qty: 2 })\n  const rows = await testDb.query('SELECT * FROM orders')\n  expect(rows).toHaveLength(1)\n})` }],
+    code: [
+      { lang: 'js', snippet: `test('saveOrder persists to the database', async () => {\n  await saveOrder(testDb, { item: 'widget', qty: 2 })\n  const rows = await testDb.query('SELECT * FROM orders')\n  expect(rows).toHaveLength(1)\n})` },
+      { lang: 'python', snippet: `def test_save_order_persists_to_the_database(test_db):\n    save_order(test_db, {"item": "widget", "qty": 2})\n    rows = test_db.query("SELECT * FROM orders")\n    assert len(rows) == 1` },
+    ],
     realWorld:
       'API endpoint tests that hit a real (containerized, disposable) test database, and message-queue tests that publish and consume a real message, catch wiring bugs pure unit tests are structurally blind to.',
     pitfall:
@@ -69,7 +75,10 @@ export const testingConcepts = [
         after: 'Driving the real browser through the real flow verifies every layer genuinely works together, the way a user actually experiences it.',
       },
     }),
-    code: [{ lang: 'js', snippet: `test('user can complete checkout', async ({ page }) => {\n  await page.goto('/cart')\n  await page.click('text=Checkout')\n  await page.fill('#card-number', '4242424242424242')\n  await page.click('text=Place Order')\n  await expect(page.locator('.confirmation')).toBeVisible()\n})` }],
+    code: [
+      { lang: 'js', snippet: `test('user can complete checkout', async ({ page }) => {\n  await page.goto('/cart')\n  await page.click('text=Checkout')\n  await page.fill('#card-number', '4242424242424242')\n  await page.click('text=Place Order')\n  await expect(page.locator('.confirmation')).toBeVisible()\n})` },
+      { lang: 'python', snippet: `def test_user_can_complete_checkout(page):\n    page.goto("/cart")\n    page.click("text=Checkout")\n    page.fill("#card-number", "4242424242424242")\n    page.click("text=Place Order")\n    expect(page.locator(".confirmation")).to_be_visible()` },
+    ],
     realWorld:
       'Playwright and Cypress drive real browsers through critical user journeys (signup, checkout, login) — the last line of defense catching integration bugs no lower-level test would see.',
     pitfall:
@@ -92,7 +101,10 @@ export const testingConcepts = [
         after: "A shared, versioned contract is checked by both sides independently — the mismatch is caught in each team's own CI.",
       },
     }),
-    code: [{ lang: 'js', snippet: `// consumer defines the expected contract\npact.addInteraction({\n  request: { method: 'GET', path: '/user/1' },\n  response: { status: 200, body: { user: { fullName: 'Ada' } } },\n})\n// provider's CI verifies its real API actually matches this contract` }],
+    code: [
+      { lang: 'js', snippet: `// consumer defines the expected contract\npact.addInteraction({\n  request: { method: 'GET', path: '/user/1' },\n  response: { status: 200, body: { user: { fullName: 'Ada' } } },\n})\n// provider's CI verifies its real API actually matches this contract` },
+      { lang: 'python', snippet: `# consumer defines the expected contract\npact.given("a user exists").upon_receiving("a request for user 1").with_request(\n    method="GET", path="/user/1"\n).will_respond_with(200, body={"user": {"fullName": "Ada"}})\n# provider's CI verifies its real API actually matches this contract` },
+    ],
     realWorld:
       'Microservices architectures with many independently-deployed teams (Pact is the standard tool) use contract testing to catch breaking API changes before they reach a shared staging environment.',
     pitfall:
@@ -115,7 +127,10 @@ export const testingConcepts = [
         after: 'Every later run compares fresh output against that baseline — any difference (intended or not) is flagged for review.',
       },
     }),
-    code: [{ lang: 'js', snippet: `test('UserCard renders correctly', () => {\n  const tree = render(<UserCard name="Ada" role="Engineer" />)\n  expect(tree).toMatchSnapshot()\n})` }],
+    code: [
+      { lang: 'js', snippet: `test('UserCard renders correctly', () => {\n  const tree = render(<UserCard name="Ada" role="Engineer" />)\n  expect(tree).toMatchSnapshot()\n})` },
+      { lang: 'python', snippet: `def test_user_card_renders_correctly(snapshot):\n    html = render_user_card(name="Ada", role="Engineer")\n    assert html == snapshot` },
+    ],
     realWorld:
       'React component testing (Jest snapshots) and API response regression testing both use this to catch unintended changes to complex, hard-to-manually-assert output.',
     pitfall:
@@ -161,7 +176,10 @@ export const testingConcepts = [
         after: 'Each kind answers a different question: a stub returns canned data, a mock verifies a call happened, a fake is a working simplified implementation, a spy observes real calls.',
       },
     }),
-    code: [{ lang: 'js', snippet: `const stub = { getUser: () => ({ id: 1, name: 'Ada' }) }        // canned response\nconst mock = jest.fn(); expect(mock).toHaveBeenCalledWith(1)    // verify interaction\nconst fake = new InMemoryUserRepo()                              // working, simplified impl\nconst spy = jest.spyOn(emailService, 'send')                     // observe real calls` }],
+    code: [
+      { lang: 'js', snippet: `const stub = { getUser: () => ({ id: 1, name: 'Ada' }) }        // canned response\nconst mock = jest.fn(); expect(mock).toHaveBeenCalledWith(1)    // verify interaction\nconst fake = new InMemoryUserRepo()                              // working, simplified impl\nconst spy = jest.spyOn(emailService, 'send')                     // observe real calls` },
+      { lang: 'python', snippet: `stub = Mock(get_user=lambda: {"id": 1, "name": "Ada"})          # canned response\nmock = Mock(); mock.assert_called_with(1)                        # verify interaction\nfake = InMemoryUserRepo()                                        # working, simplified impl\nspy = mocker.spy(email_service, "send")                          # observe real calls` },
+    ],
     realWorld:
       'Well-tested codebases use each kind deliberately — a fake in-memory database for integration-style unit tests, a mock specifically when the point is "was this called correctly".',
     pitfall:
@@ -184,7 +202,10 @@ export const testingConcepts = [
         after: 'The dependency is passed in from outside — a test provides a fake, in-memory implementation with zero changes to the class itself.',
       },
     }),
-    code: [{ lang: 'js', snippet: `class OrderService {\n  constructor(db) { this.db = db }  // injected, not hardcoded\n  async save(order) { return this.db.insert('orders', order) }\n}\n\n// production: new OrderService(postgresDb)\n// test:       new OrderService(new InMemoryFakeDb())` }],
+    code: [
+      { lang: 'js', snippet: `class OrderService {\n  constructor(db) { this.db = db }  // injected, not hardcoded\n  async save(order) { return this.db.insert('orders', order) }\n}\n\n// production: new OrderService(postgresDb)\n// test:       new OrderService(new InMemoryFakeDb())` },
+      { lang: 'python', snippet: `class OrderService:\n    def __init__(self, db):  # injected, not hardcoded\n        self.db = db\n\n    def save(self, order):\n        return self.db.insert("orders", order)\n\n# production: OrderService(postgres_db)\n# test:       OrderService(InMemoryFakeDb())` },
+    ],
     realWorld:
       'Every framework built around dependency injection (Spring, Angular, NestJS) exists partly for this reason — a class that receives its dependencies is trivially testable in isolation.',
     pitfall:
@@ -207,7 +228,10 @@ export const testingConcepts = [
         after: 'A single factory function produces valid test data, with just the specific fields each test cares about overridden.',
       },
     }),
-    code: [{ lang: 'js', snippet: `function makeTestUser(overrides = {}) {\n  return { id: 1, name: 'Test User', role: 'member', ...overrides }\n}\n\ntest('admin can delete posts', () => {\n  const admin = makeTestUser({ role: 'admin' })\n  expect(canDelete(admin)).toBe(true)\n})` }],
+    code: [
+      { lang: 'js', snippet: `function makeTestUser(overrides = {}) {\n  return { id: 1, name: 'Test User', role: 'member', ...overrides }\n}\n\ntest('admin can delete posts', () => {\n  const admin = makeTestUser({ role: 'admin' })\n  expect(canDelete(admin)).toBe(true)\n})` },
+      { lang: 'python', snippet: `def make_test_user(**overrides):\n    return {"id": 1, "name": "Test User", "role": "member", **overrides}\n\ndef test_admin_can_delete_posts():\n    admin = make_test_user(role="admin")\n    assert can_delete(admin) is True` },
+    ],
     realWorld:
       'Factory libraries (factory_bot in Ruby, Faker-based factories in JS) exist so test data creation is DRY and a schema change only needs updating in one place.',
     pitfall:
@@ -230,7 +254,10 @@ export const testingConcepts = [
         after: 'Each test creates exactly the state it needs and cleans up after itself — order and parallel execution stop mattering entirely.',
       },
     }),
-    code: [{ lang: 'js', snippet: `beforeEach(async () => {\n  await testDb.clear()          // fresh state before every test\n  await testDb.seed(baseFixtures)\n})\n\nafterEach(async () => {\n  await testDb.clear()          // no leftovers for the next test\n})` }],
+    code: [
+      { lang: 'js', snippet: `beforeEach(async () => {\n  await testDb.clear()          // fresh state before every test\n  await testDb.seed(baseFixtures)\n})\n\nafterEach(async () => {\n  await testDb.clear()          // no leftovers for the next test\n})` },
+      { lang: 'python', snippet: `@pytest.fixture(autouse=True)\ndef reset_db(test_db):\n    test_db.clear()          # fresh state before every test\n    test_db.seed(base_fixtures)\n    yield\n    test_db.clear()          # no leftovers for the next test` },
+    ],
     realWorld:
       'Test runners that parallelize or randomize execution order (Jest, pytest-randomly) exist partly to force isolation bugs to surface immediately, instead of staying hidden.',
     pitfall:
@@ -253,7 +280,10 @@ export const testingConcepts = [
         after: 'The test defines the desired behavior before any implementation exists — code is written specifically to satisfy an already-written specification.',
       },
     }),
-    code: [{ lang: 'js', snippet: `// RED: write the test first, watch it fail\ntest('add(2, 3) returns 5', () => { expect(add(2, 3)).toBe(5) })\n\n// GREEN: write just enough code to pass\nfunction add(a, b) { return a + b }\n\n// REFACTOR: clean up with the test as a safety net` }],
+    code: [
+      { lang: 'js', snippet: `// RED: write the test first, watch it fail\ntest('add(2, 3) returns 5', () => { expect(add(2, 3)).toBe(5) })\n\n// GREEN: write just enough code to pass\nfunction add(a, b) { return a + b }\n\n// REFACTOR: clean up with the test as a safety net` },
+      { lang: 'python', snippet: `# RED: write the test first, watch it fail\ndef test_add_returns_5():\n    assert add(2, 3) == 5\n\n# GREEN: write just enough code to pass\ndef add(a, b):\n    return a + b\n\n# REFACTOR: clean up with the test as a safety net` },
+    ],
     realWorld:
       'TDD is a core practice in Extreme Programming and remains widely used for its side effect: it forces every piece of logic to be written in a testable, decoupled way from the start.',
     pitfall:
@@ -276,7 +306,10 @@ export const testingConcepts = [
         after: 'Three clearly separated sections mean any reader can find the actual assertion immediately, without tracing through unrelated setup.',
       },
     }),
-    code: [{ lang: 'js', snippet: `test('applying a coupon reduces the total', () => {\n  // Arrange\n  const cart = new Cart([{ price: 100 }])\n\n  // Act\n  cart.applyCoupon('SAVE10')\n\n  // Assert\n  expect(cart.total).toBe(90)\n})` }],
+    code: [
+      { lang: 'js', snippet: `test('applying a coupon reduces the total', () => {\n  // Arrange\n  const cart = new Cart([{ price: 100 }])\n\n  // Act\n  cart.applyCoupon('SAVE10')\n\n  // Assert\n  expect(cart.total).toBe(90)\n})` },
+      { lang: 'python', snippet: `def test_applying_a_coupon_reduces_the_total():\n    # Arrange\n    cart = Cart([{"price": 100}])\n\n    # Act\n    cart.apply_coupon("SAVE10")\n\n    # Assert\n    assert cart.total == 90` },
+    ],
     realWorld:
       'This structure (also called Given-When-Then in BDD frameworks) is close to universal in test-writing style guides precisely because it makes any test readable by the same pattern.',
     pitfall:
@@ -368,7 +401,10 @@ export const testingConcepts = [
         after: "The actual non-determinism (a timing assumption that doesn't always hold) is found and fixed — the test becomes reliably deterministic again.",
       },
     }),
-    code: [{ lang: 'js', snippet: `// Flaky: assumes the animation finishes in exactly 300ms\nawait sleep(300); expect(el).toHaveClass('visible')\n\n// Fixed: wait for the actual condition, not a guessed duration\nawait waitFor(() => expect(el).toHaveClass('visible'))` }],
+    code: [
+      { lang: 'js', snippet: `// Flaky: assumes the animation finishes in exactly 300ms\nawait sleep(300); expect(el).toHaveClass('visible')\n\n// Fixed: wait for the actual condition, not a guessed duration\nawait waitFor(() => expect(el).toHaveClass('visible'))` },
+      { lang: 'python', snippet: `# Flaky: assumes the animation finishes in exactly 300ms\ntime.sleep(0.3); assert "visible" in el.classes\n\n# Fixed: wait for the actual condition, not a guessed duration\nwait_until(lambda: "visible" in el.classes)` },
+    ],
     realWorld:
       'Every CI system at scale has dedicated tooling to detect and quarantine flaky tests automatically — left unmanaged, flakiness is one of the fastest ways a team stops trusting its test suite.',
     pitfall:
@@ -414,7 +450,10 @@ export const testingConcepts = [
         after: 'The framework generates hundreds of random inputs automatically and found a genuine edge case a human would likely never write by hand.',
       },
     }),
-    code: [{ lang: 'js', snippet: `import fc from 'fast-check'\n\nfc.assert(\n  fc.property(fc.array(fc.integer()), (xs) => {\n    return JSON.stringify(reverse(reverse(xs))) === JSON.stringify(xs)\n  })\n)\n// runs 100+ random arrays automatically, shrinks any failure to a minimal repro` }],
+    code: [
+      { lang: 'js', snippet: `import fc from 'fast-check'\n\nfc.assert(\n  fc.property(fc.array(fc.integer()), (xs) => {\n    return JSON.stringify(reverse(reverse(xs))) === JSON.stringify(xs)\n  })\n)\n// runs 100+ random arrays automatically, shrinks any failure to a minimal repro` },
+      { lang: 'python', snippet: `from hypothesis import given, strategies as st\n\n@given(st.lists(st.integers()))\ndef test_double_reverse_is_identity(xs):\n    assert reverse(reverse(xs)) == xs\n# runs 100+ random lists automatically, shrinks any failure to a minimal repro` },
+    ],
     realWorld:
       'Parsers, serialization code, and anything with mathematical invariants (sorting, encode/decode round-trips) benefit enormously — QuickCheck (Haskell) originated the idea, now widely ported.',
     pitfall:
@@ -506,7 +545,10 @@ export const testingConcepts = [
         after: 'A real <button> element gets keyboard focus, correct semantics, and screen reader announcement for free.',
       },
     }),
-    code: [{ lang: 'js', snippet: `import { axe } from 'jest-axe'\n\ntest('checkout page has no accessibility violations', async () => {\n  const { container } = render(<CheckoutPage />)\n  expect(await axe(container)).toHaveNoViolations()\n})` }],
+    code: [
+      { lang: 'js', snippet: `import { axe } from 'jest-axe'\n\ntest('checkout page has no accessibility violations', async () => {\n  const { container } = render(<CheckoutPage />)\n  expect(await axe(container)).toHaveNoViolations()\n})` },
+      { lang: 'python', snippet: `from axe_selenium_python import Axe\n\ndef test_checkout_page_has_no_accessibility_violations(selenium):\n    selenium.get("/checkout")\n    axe = Axe(selenium)\n    axe.inject()\n    results = axe.run()\n    assert len(results["violations"]) == 0` },
+    ],
     realWorld:
       'Automated tools like axe-core catch a meaningful chunk of accessibility issues directly in CI — legally required under standards like WCAG for many public-facing sites.',
     pitfall:
@@ -598,7 +640,10 @@ export const testingConcepts = [
         after: "The clock is fixed to an exact, known instant — the test's result is fully determined by the code alone.",
       },
     }),
-    code: [{ lang: 'js', snippet: `beforeEach(() => {\n  jest.useFakeTimers()\n  jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))\n})\n\ntest('token issued yesterday is expired after 24h', () => {\n  const token = issueToken({ issuedAt: new Date('2025-12-30') })\n  expect(isExpired(token)).toBe(true)\n})` }],
+    code: [
+      { lang: 'js', snippet: `beforeEach(() => {\n  jest.useFakeTimers()\n  jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))\n})\n\ntest('token issued yesterday is expired after 24h', () => {\n  const token = issueToken({ issuedAt: new Date('2025-12-30') })\n  expect(isExpired(token)).toBe(true)\n})` },
+      { lang: 'python', snippet: `@freeze_time("2026-01-01T00:00:00Z")\ndef test_token_issued_yesterday_is_expired_after_24h():\n    token = issue_token(issued_at=datetime(2025, 12, 30))\n    assert is_expired(token) is True` },
+    ],
     realWorld:
       'Any code involving expiration, scheduling, or "time since X" logic needs this — a subscription-expiry test that only passes for a few more months is a classic, easy-to-miss bug.',
     pitfall:

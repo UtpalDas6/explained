@@ -23,7 +23,10 @@ export const eventDrivenConcepts = [
         after: "An event just states a fact that already happened — the sender doesn't know or care who's listening, and any number of services can react independently.",
       },
     }),
-    code: [{ lang: 'js', snippet: `// Command: imperative, targeted, expects a response\nbillingService.chargeCard({ orderId, amount })\n\n// Event: a fact, broadcast, no response expected\neventBus.publish('OrderPlaced', { orderId, amount, items })` }],
+    code: [
+      { lang: 'js', snippet: `// Command: imperative, targeted, expects a response\nbillingService.chargeCard({ orderId, amount })\n\n// Event: a fact, broadcast, no response expected\neventBus.publish('OrderPlaced', { orderId, amount, items })` },
+      { lang: 'python', snippet: `# Command: imperative, targeted, expects a response\nbilling_service.charge_card(order_id=order_id, amount=amount)\n\n# Event: a fact, broadcast, no response expected\nevent_bus.publish("OrderPlaced", {"order_id": order_id, "amount": amount, "items": items})` },
+    ],
     realWorld:
       '"PlaceOrder" is a command (aimed at the order service, expecting success/failure); "OrderPlaced" is the resulting event that inventory, billing, and email services all independently react to.',
     pitfall:
@@ -46,7 +49,10 @@ export const eventDrivenConcepts = [
         after: 'OrderService just publishes a fact — any number of subscribers can be added or removed later without ever touching the publisher.',
       },
     }),
-    code: [{ lang: 'js', snippet: `eventBus.publish('OrderPlaced', order)\n\n// each subscriber registers independently, publisher never knows they exist\neventBus.subscribe('OrderPlaced', emailService.sendConfirmation)\neventBus.subscribe('OrderPlaced', analyticsService.track)\neventBus.subscribe('OrderPlaced', loyaltyService.addPoints)` }],
+    code: [
+      { lang: 'js', snippet: `eventBus.publish('OrderPlaced', order)\n\n// each subscriber registers independently, publisher never knows they exist\neventBus.subscribe('OrderPlaced', emailService.sendConfirmation)\neventBus.subscribe('OrderPlaced', analyticsService.track)\neventBus.subscribe('OrderPlaced', loyaltyService.addPoints)` },
+      { lang: 'python', snippet: `event_bus.publish("OrderPlaced", order)\n\n# each subscriber registers independently, publisher never knows they exist\nevent_bus.subscribe("OrderPlaced", email_service.send_confirmation)\nevent_bus.subscribe("OrderPlaced", analytics_service.track)\nevent_bus.subscribe("OrderPlaced", loyalty_service.add_points)` },
+    ],
     realWorld:
       "Kafka topics, SNS topics, and Redis pub/sub all implement this exact pattern — it's the foundational primitive nearly every event-driven system is built on top of.",
     pitfall:
@@ -69,7 +75,10 @@ export const eventDrivenConcepts = [
         after: 'The event itself carries the full changed state — no callback needed, and the subscriber keeps working even if the source is temporarily down.',
       },
     }),
-    code: [{ lang: 'js', snippet: `// Notification-style: thin, requires a callback\n{ event: 'OrderUpdated', orderId: 42 }\n// -> subscriber must: GET /orders/42\n\n// State-transfer style: fat, self-contained\n{ event: 'OrderUpdated', orderId: 42, items: [...], total: 89.99, status: 'shipped' }` }],
+    code: [
+      { lang: 'js', snippet: `// Notification-style: thin, requires a callback\n{ event: 'OrderUpdated', orderId: 42 }\n// -> subscriber must: GET /orders/42\n\n// State-transfer style: fat, self-contained\n{ event: 'OrderUpdated', orderId: 42, items: [...], total: 89.99, status: 'shipped' }` },
+      { lang: 'python', snippet: `# Notification-style: thin, requires a callback\n{"event": "OrderUpdated", "order_id": 42}\n# -> subscriber must: GET /orders/42\n\n# State-transfer style: fat, self-contained\n{"event": "OrderUpdated", "order_id": 42, "items": [...], "total": 89.99, "status": "shipped"}` },
+    ],
     realWorld:
       'High-availability systems favor carried-state events specifically so subscribers keep functioning even during a source-service outage — no synchronous callback dependency to break.',
     pitfall:
@@ -92,7 +101,10 @@ export const eventDrivenConcepts = [
         after: 'OrderService publishes and immediately continues — InventoryService can process the event seconds later without OrderService ever knowing.',
       },
     }),
-    code: [{ lang: 'js', snippet: `// Request-response: synchronous, coupled availability\nconst result = await inventoryService.reserve(orderId, items)  // blocks\n\n// Event-driven: asynchronous, decoupled availability\neventBus.publish('OrderPlaced', { orderId, items })  // returns immediately` }],
+    code: [
+      { lang: 'js', snippet: `// Request-response: synchronous, coupled availability\nconst result = await inventoryService.reserve(orderId, items)  // blocks\n\n// Event-driven: asynchronous, decoupled availability\neventBus.publish('OrderPlaced', { orderId, items })  // returns immediately` },
+      { lang: 'python', snippet: `# Request-response: synchronous, coupled availability\nresult = await inventory_service.reserve(order_id, items)  # blocks\n\n# Event-driven: asynchronous, decoupled availability\nevent_bus.publish("OrderPlaced", {"order_id": order_id, "items": items})  # returns immediately` },
+    ],
     realWorld:
       'Order processing pipelines (payment, inventory, shipping, notification) commonly go event-driven precisely so a slow or temporarily-down shipping service never blocks checkout itself.',
     pitfall:
@@ -161,7 +173,10 @@ export const eventDrivenConcepts = [
         after: "The consumer checks whether it's already processed this exact event id before doing work — a redelivery becomes a safe no-op.",
       },
     }),
-    code: [{ lang: 'python', snippet: `def handle_payment_received(event):\n    if processed_events.exists(event.id):\n        return  # already handled, safe no-op\n    charge_customer(event.amount)\n    processed_events.mark_done(event.id)` }],
+    code: [
+      { lang: 'js', snippet: `function handlePaymentReceived(event) {\n  if (processedEvents.exists(event.id)) return  // already handled, safe no-op\n  chargeCustomer(event.amount)\n  processedEvents.markDone(event.id)\n}` },
+      { lang: 'python', snippet: `def handle_payment_received(event):\n    if processed_events.exists(event.id):\n        return  # already handled, safe no-op\n    charge_customer(event.amount)\n    processed_events.mark_done(event.id)` },
+    ],
     realWorld:
       'Every payment, order fulfillment, and inventory decrement consumer built on at-least-once messaging needs this — the single most important safety property in event-driven systems.',
     pitfall:
@@ -253,7 +268,10 @@ export const eventDrivenConcepts = [
         after: 'Every change is preserved as its own immutable event — current state is derivable by replaying them, full history never lost.',
       },
     }),
-    code: [{ lang: 'python', snippet: `events = [Deposited(100), Deposited(75), Withdrew(25)]\nbalance = sum(e.amount if isinstance(e, Deposited) else -e.amount for e in events)\n# 150 — but unlike a plain balance column, every step that led here is preserved` }],
+    code: [
+      { lang: 'js', snippet: `const events = [new Deposited(100), new Deposited(75), new Withdrew(25)]\nconst balance = events.reduce((sum, e) => sum + (e instanceof Deposited ? e.amount : -e.amount), 0)\n// 150 — but unlike a plain balance column, every step that led here is preserved` },
+      { lang: 'python', snippet: `events = [Deposited(100), Deposited(75), Withdrew(25)]\nbalance = sum(e.amount if isinstance(e, Deposited) else -e.amount for e in events)\n# 150 — but unlike a plain balance column, every step that led here is preserved` },
+    ],
     realWorld:
       'Banking ledgers, audit-heavy domains (healthcare records, financial trading), and any system where "how did we get here" matters as much as the state itself are natural fits.',
     pitfall:
@@ -322,7 +340,10 @@ export const eventDrivenConcepts = [
         after: 'Each event is processed the moment it arrives — the same logic now runs in milliseconds instead of waiting for the next batch window.',
       },
     }),
-    code: [{ lang: 'python', snippet: `stream = kafka_stream.subscribe('transactions')\nfor transaction in stream:\n    if fraud_score(transaction) > 0.9:\n        flag_for_review(transaction)  # happens within milliseconds of the event` }],
+    code: [
+      { lang: 'js', snippet: `const stream = kafkaStream.subscribe('transactions')\nfor await (const transaction of stream) {\n  if (fraudScore(transaction) > 0.9) {\n    flagForReview(transaction)  // happens within milliseconds of the event\n  }\n}` },
+      { lang: 'python', snippet: `stream = kafka_stream.subscribe('transactions')\nfor transaction in stream:\n    if fraud_score(transaction) > 0.9:\n        flag_for_review(transaction)  # happens within milliseconds of the event` },
+    ],
     realWorld:
       'Fraud detection, real-time dashboards, and live recommendation updates all need stream processing — the value of the insight decays fast.',
     pitfall:
@@ -391,7 +412,10 @@ export const eventDrivenConcepts = [
         after: 'A local, checkpointed state store maintains the running total across events, and can recover to its last known-good value after a crash.',
       },
     }),
-    code: [{ lang: 'python', snippet: `def process(event, state_store):\n    state_store['running_total'] += event.amount\n    state_store.checkpoint()  # periodically persisted, so a crash can recover\n    return state_store['running_total']` }],
+    code: [
+      { lang: 'js', snippet: `function process(event, stateStore) {\n  stateStore.runningTotal += event.amount\n  stateStore.checkpoint()  // periodically persisted, so a crash can recover\n  return stateStore.runningTotal\n}` },
+      { lang: 'python', snippet: `def process(event, state_store):\n    state_store['running_total'] += event.amount\n    state_store.checkpoint()  # periodically persisted, so a crash can recover\n    return state_store['running_total']` },
+    ],
     realWorld:
       'Kafka Streams and Flink both provide built-in, fault-tolerant state stores — running aggregates, joins between live streams, and deduplication all need this.',
     pitfall:
