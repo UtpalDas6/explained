@@ -1,13 +1,13 @@
 import { createElement } from 'react'
-import StateDemo from '../concepts/shared/StateDemo.jsx'
+import SystemDiagram from '../concepts/shared/SystemDiagram.jsx'
 
 // Registry for the /cases section — 14 classic system design interview case
 // studies, grouped Feeds & Social / Real-Time & Location / Media Streaming /
-// Commerce & Booking / Storage & Sync / Search & Discovery. Reuses the same
-// StateDemo component every other section uses, framed as naive-first-pass
-// design vs. the production-scale design and the specific technique that
-// gets you from one to the other.
-const demo = (props) => () => createElement(StateDemo, props)
+// Commerce & Booking / Storage & Sync / Search & Discovery. Each renders a
+// real block diagram (nodes in layers, measured SVG connectors) via
+// SystemDiagram, with a "trace the request" walkthrough highlighting the
+// path step by step — draw.io-style architecture, not a text comparison.
+const diagram = (props) => () => createElement(SystemDiagram, props)
 
 export const caseStudiesConcepts = [
   {
@@ -16,14 +16,33 @@ export const caseStudiesConcepts = [
     title: 'Design Twitter / X',
     blurb: 'A feed of short posts from people you follow — the classic fan-out problem: push new posts to followers at write time, or pull them at read time?',
     tag: 'Feeds & Social',
-    Component: demo({
-      command: 'scale the fan-out',
-      before: [{ label: '1 server, 1 DB', sub: 'SELECT posts WHERE author IN (following) ORDER BY time — computed on every read', color: 'var(--bad)' }],
-      after: [{ label: 'fan-out-on-write to a precomputed timeline cache', sub: '+ fan-out-on-read for celebrities with millions of followers', color: 'var(--good)' }],
-      note: {
-        before: 'Every time you open the app, the server joins your following list against the posts table and sorts — fine for a few users, collapses under real load.',
-        after: "New posts are pushed into every follower's precomputed timeline the instant they're posted — reads become a fast cache lookup. Accounts with millions of followers fall back to pull instead, since pushing one post to 100M timelines would be its own bottleneck.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a new post',
+      intro: 'Click to trace a post from creation through fan-out to a follower\'s feed.',
+      nodes: [
+        { id: 'client', label: 'User', sub: 'posts a tweet', layer: 0 },
+        { id: 'api', label: 'Tweet Service', layer: 1 },
+        { id: 'db', label: 'Tweets DB', sub: 'permanent storage', layer: 2 },
+        { id: 'fanout', label: 'Fan-out Worker', layer: 2 },
+        { id: 'timeline', label: 'Timeline Cache', sub: 'per follower', layer: 3 },
+        { id: 'follower', label: "Follower's Feed", sub: 'fast cache read', layer: 4 },
+      ],
+      edges: [
+        { from: 'client', to: 'api' },
+        { from: 'api', to: 'db' },
+        { from: 'api', to: 'fanout' },
+        { from: 'fanout', to: 'timeline' },
+        { from: 'timeline', to: 'follower' },
+      ],
+      steps: ['client', 'api', 'db', 'fanout', 'timeline', 'follower'],
+      captions: [
+        'A user posts a tweet.',
+        'The Tweet Service receives it and persists it, then kicks off fan-out.',
+        'The tweet itself is stored once, permanently — the single source of truth.',
+        'A fan-out worker looks up every follower of this account.',
+        "It writes the tweet into each follower's precomputed timeline cache.",
+        "The follower's feed is just a fast cache read — celebrity accounts skip this and fall back to a live merge at read time instead.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `Post:       { id, author_id, text, media_url, created_at }\nTimeline:   { user_id, post_id, ranked_score }  # precomputed, one row per (user, post) — this is the fan-out\nFollow:     { follower_id, followee_id }\n\n# fan-out-on-write (most users):\non new_post(post):\n  for follower in followers_of(post.author_id):\n    timeline.insert(follower.id, post.id)\n\n# fan-out-on-read (celebrity accounts, millions of followers):\non read_timeline(user):\n  merge(cached_timeline, live_query(celebrities_user_follows))` }],
     realWorld:
@@ -39,14 +58,34 @@ export const caseStudiesConcepts = [
     title: 'Design Instagram',
     blurb: 'Photo/video sharing with a following-based feed and ephemeral Stories — object storage for media, a ranked feed, and a separate high-write, short-TTL path for Stories.',
     tag: 'Feeds & Social',
-    Component: demo({
-      command: 'separate the hot path',
-      before: [{ label: 'photos + stories in the same table, same feed query', sub: '24h-TTL stories bloat the same index as permanent posts', color: 'var(--bad)' }],
-      after: [{ label: 'posts: durable feed store', sub: 'stories: separate, short-TTL, high-write store — expired automatically', color: 'var(--good)' }],
-      note: {
-        before: "Stories are far higher write volume but expire in 24 hours — mixing them with permanent posts in one table means the feed index is constantly churning with data nobody keeps.",
-        after: 'Stories live in their own store with a TTL that expires them automatically — the permanent feed store stays lean, and the ephemeral store is tuned for its very different write/read pattern.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace an upload',
+      intro: 'Click to trace a post or story from upload to a viewer.',
+      nodes: [
+        { id: 'client', label: 'User', sub: 'uploads media', layer: 0 },
+        { id: 'api', label: 'Upload API', layer: 1 },
+        { id: 'postsdb', label: 'Posts DB', sub: 'durable, permanent', layer: 2 },
+        { id: 'storiesstore', label: 'Stories Store', sub: '24h TTL, auto-expires', layer: 2 },
+        { id: 'cdn', label: 'CDN', layer: 3 },
+        { id: 'viewer', label: 'Viewer', layer: 4 },
+      ],
+      edges: [
+        { from: 'client', to: 'api' },
+        { from: 'api', to: 'postsdb' },
+        { from: 'api', to: 'storiesstore' },
+        { from: 'postsdb', to: 'cdn' },
+        { from: 'storiesstore', to: 'cdn' },
+        { from: 'cdn', to: 'viewer' },
+      ],
+      steps: ['client', 'api', 'postsdb', 'storiesstore', 'cdn', 'viewer'],
+      captions: [
+        'A user uploads a photo, video, or story.',
+        'The Upload API routes it based on type.',
+        'Permanent posts go to the durable Posts DB, feeding the ranked feed.',
+        'Stories go to a separate store with a 24h TTL — expired automatically, never touching the permanent index.',
+        'Either way, the media itself is pushed to a CDN — application servers never touch image bytes again.',
+        'The viewer loads media straight from the CDN edge, not from origin storage.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `Post:   { id, user_id, media_url (S3), caption, created_at }\nStory:  { id, user_id, media_url (S3), created_at, expires_at }  # TTL-indexed, auto-deleted\n\nFeedEntry:  { user_id, post_id, rank_score }  # precomputed, similar to Twitter's fan-out\n# media itself: uploaded directly to S3, CDN in front of it for reads — app servers never touch image bytes` }],
     realWorld:
@@ -62,14 +101,33 @@ export const caseStudiesConcepts = [
     title: 'Design Google Keep',
     blurb: 'A notes app that syncs across devices and works offline — the core challenge is merging edits made while offline without losing data, using the same ideas as CRDTs.',
     tag: 'Feeds & Social',
-    Component: demo({
-      command: 'handle the offline conflict',
-      before: [{ label: 'last-write-wins by timestamp', sub: 'an offline edit is silently overwritten by an earlier online edit synced later', color: 'var(--bad)' }],
-      after: [{ label: 'per-field CRDT merge (or op-based sync log)', sub: 'both edits preserved and merged — no data silently lost', color: 'var(--good)' }],
-      note: {
-        before: 'A note edited offline on a phone, then synced after an online edit from a laptop already landed, can get silently clobbered by naive timestamp comparison.',
-        after: "Each field (or the whole note, structured as a CRDT) merges edits from both devices deterministically — a title change and a body change from two different offline sessions both survive.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a sync',
+      intro: 'Click to trace two offline edits merging back together.',
+      nodes: [
+        { id: 'phone', label: 'Phone', sub: 'edited offline', layer: 0 },
+        { id: 'laptop', label: 'Laptop', sub: 'edited online', layer: 0 },
+        { id: 'sync', label: 'Sync Service', layer: 1 },
+        { id: 'merge', label: 'CRDT Merge', sub: 'per-field, deterministic', layer: 2 },
+        { id: 'notesdb', label: 'Notes Store', layer: 3 },
+        { id: 'alldevices', label: 'All Devices', sub: 'converge to same state', layer: 4 },
+      ],
+      edges: [
+        { from: 'phone', to: 'sync' },
+        { from: 'laptop', to: 'sync' },
+        { from: 'sync', to: 'merge' },
+        { from: 'merge', to: 'notesdb' },
+        { from: 'notesdb', to: 'alldevices' },
+      ],
+      steps: ['phone', 'laptop', 'sync', 'merge', 'notesdb', 'alldevices'],
+      captions: [
+        'The phone made an edit while offline, days ago.',
+        'The laptop made a different edit while online, just now.',
+        'Both versions reach the Sync Service once the phone reconnects.',
+        'A CRDT-style merge combines both edits deterministically — neither is silently overwritten.',
+        'The merged note is written back to the Notes Store as the new canonical version.',
+        'Every device converges to the same merged state on its next sync.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `Note: { id, owner_id, title, body, checklist_items: [...], version_vector: {device_a: 3, device_b: 1} }\n\non sync(local_note, remote_note):\n  if version_vector_concurrent(local_note, remote_note):\n    merged = merge_fields(local_note, remote_note)  # CRDT-style per-field merge\n  else:\n    merged = newer(local_note, remote_note)  # one strictly happened-after the other` }],
     realWorld:
@@ -85,14 +143,30 @@ export const caseStudiesConcepts = [
     title: 'Design WhatsApp',
     blurb: 'Real-time, end-to-end encrypted messaging at massive scale — the hard parts are message delivery guarantees and presence, not the chat UI.',
     tag: 'Real-Time & Location',
-    Component: demo({
-      command: 'guarantee delivery',
-      before: [{ label: 'POST /send-message, fire and forget', sub: 'recipient offline → message silently lost', color: 'var(--bad)' }],
-      after: [{ label: 'persistent WebSocket + message queue per user', sub: 'queued messages delivered the moment the recipient reconnects', color: 'var(--good)' }],
-      note: {
-        before: 'A plain HTTP request has no concept of "try again later" — if the recipient is offline at that exact moment, the message just never arrives.',
-        after: 'Each user has a durable queue; a connected client gets messages pushed in real time, and a disconnected one picks up its queued messages the moment it reconnects.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace a message',
+      intro: 'Click to trace a message to an offline recipient.',
+      nodes: [
+        { id: 'sender', label: 'Sender', layer: 0 },
+        { id: 'chatserver', label: 'Chat Server', layer: 1 },
+        { id: 'msgstore', label: 'Message Store', sub: 'durable', layer: 2 },
+        { id: 'queue', label: 'Per-User Queue', layer: 2 },
+        { id: 'recipient', label: 'Recipient', sub: 'offline → delivered on reconnect', layer: 3 },
+      ],
+      edges: [
+        { from: 'sender', to: 'chatserver' },
+        { from: 'chatserver', to: 'msgstore' },
+        { from: 'chatserver', to: 'queue' },
+        { from: 'queue', to: 'recipient' },
+      ],
+      steps: ['sender', 'chatserver', 'msgstore', 'queue', 'recipient'],
+      captions: [
+        'The sender sends a message.',
+        'The Chat Server receives it over a persistent connection.',
+        'It persists the message durably — this survives a server crash.',
+        "Since the recipient is offline, it's placed on their durable queue instead of pushed immediately.",
+        'The moment the recipient reconnects, every queued message is delivered — nothing was lost.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `Message: { id, sender_id, recipient_id, ciphertext, sent_at, delivered_at, read_at }\n\non send(message):\n  persist(message)  # durable, survives a server crash\n  if recipient.isOnline(): push_via_websocket(message)\n  else: queue_for_delivery(message)  # delivered on next connect\n\non recipient_reconnects():\n  deliver_all(queued_messages_for(recipient))` }],
     realWorld:
@@ -108,14 +182,30 @@ export const caseStudiesConcepts = [
     title: 'Design Uber',
     blurb: 'Matching riders to nearby drivers in real time — the core challenge is efficient geospatial queries at a scale where a naive distance scan is far too slow.',
     tag: 'Real-Time & Location',
-    Component: demo({
-      command: 'index by location',
-      before: [{ label: 'scan every driver, compute distance to each', sub: 'O(n) per request — too slow with 100,000+ active drivers', color: 'var(--bad)' }],
-      after: [{ label: 'geohash / quadtree index: query only nearby cells', sub: 'O(log n) — checks a small, relevant subset of drivers', color: 'var(--good)' }],
-      note: {
-        before: 'Computing the distance from the rider to literally every active driver is correct, but the cost grows linearly with driver count.',
-        after: "A spatial index only has to check drivers in nearby cells — the search space shrinks from \"every driver in the city\" to \"drivers within a few blocks\".",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a ride request',
+      intro: 'Click to trace a rider request through geospatial matching.',
+      nodes: [
+        { id: 'rider', label: 'Rider', sub: 'requests a ride', layer: 0 },
+        { id: 'matching', label: 'Matching Service', layer: 1 },
+        { id: 'geoindex', label: 'Geohash Index', layer: 2 },
+        { id: 'nearby', label: 'Nearby Drivers', sub: 'small candidate set', layer: 3 },
+        { id: 'driver', label: 'Matched Driver', layer: 4 },
+      ],
+      edges: [
+        { from: 'rider', to: 'matching' },
+        { from: 'matching', to: 'geoindex' },
+        { from: 'geoindex', to: 'nearby' },
+        { from: 'nearby', to: 'driver' },
+      ],
+      steps: ['rider', 'matching', 'geoindex', 'nearby', 'driver'],
+      captions: [
+        'The rider requests a ride at their current location.',
+        'The Matching Service looks up who could take it.',
+        "Instead of scanning every driver, it queries the geohash index for the rider's cell.",
+        'Only a small set of nearby drivers comes back — not the entire city.',
+        'The closest available driver from that small set is matched.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `DriverLocation: { driver_id, geohash, lat, lng, updated_at }  # updated every few seconds\n\non find_nearby_drivers(rider_location):\n  cell = geohash(rider_location, precision=6)  # ~1.2km x 0.6km cell\n  candidates = query_drivers_in_cells(neighboring_cells(cell))\n  return sort_by_actual_distance(candidates)[:5]` }],
     realWorld:
@@ -131,14 +221,32 @@ export const caseStudiesConcepts = [
     title: 'Design a Notification System',
     blurb: 'Delivering push notifications, emails, and SMS to millions of users reliably — the challenge is fanning out one trigger to many channels without one slow channel blocking the others.',
     tag: 'Real-Time & Location',
-    Component: demo({
-      command: 'decouple channels from the trigger',
-      before: [{ label: 'trigger calls sendPush(), sendEmail(), sendSms() in sequence', sub: 'one slow/down channel blocks the whole notification', color: 'var(--bad)' }],
-      after: [{ label: 'trigger publishes one event → separate queue + worker per channel', sub: 'an SMS outage only delays SMS, push and email still deliver instantly', color: 'var(--good)' }],
-      note: {
-        before: 'Calling each delivery channel synchronously in sequence means a slow or failing channel delays or blocks every channel after it.',
-        after: "Publishing one event and letting independent workers per channel consume it fully decouples each channel's reliability — the Event-Driven Systems section's fan-out pattern.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a notification',
+      intro: 'Click to trace one trigger fanning out to every channel.',
+      nodes: [
+        { id: 'trigger', label: 'Event Trigger', layer: 0 },
+        { id: 'bus', label: 'Event Bus', layer: 1 },
+        { id: 'push', label: 'Push Worker', layer: 2 },
+        { id: 'email', label: 'Email Worker', layer: 2 },
+        { id: 'sms', label: 'SMS Worker', sub: 'down right now', layer: 2 },
+        { id: 'device', label: "User's Device", layer: 3 },
+      ],
+      edges: [
+        { from: 'trigger', to: 'bus' },
+        { from: 'bus', to: 'push' },
+        { from: 'bus', to: 'email' },
+        { from: 'bus', to: 'sms' },
+        { from: 'push', to: 'device' },
+        { from: 'email', to: 'device' },
+      ],
+      steps: ['trigger', 'bus', 'push', 'device'],
+      captions: [
+        'Something happens that should notify a user.',
+        'One event is published — the trigger has no idea which channels exist.',
+        'The push worker (an independent consumer) picks it up immediately.',
+        "It's delivered to the user's device instantly — a struggling SMS provider elsewhere never touches this path at all.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `on trigger_notification(user_id, event_type, payload):\n  event_bus.publish("NotificationTriggered", { user_id, event_type, payload })\n\n# each channel is an independent consumer — one being slow/down doesn't affect the others\npush_worker:  on NotificationTriggered -> send_push(user.device_tokens, payload)\nemail_worker: on NotificationTriggered -> send_email(user.email, render_template(payload))\nsms_worker:   on NotificationTriggered -> send_sms(user.phone, payload) if user.sms_enabled` }],
     realWorld:
@@ -154,14 +262,36 @@ export const caseStudiesConcepts = [
     title: 'Design YouTube',
     blurb: 'Video upload, transcoding into multiple resolutions, and streaming to billions of viewers — the core challenge is transcoding throughput and CDN delivery, not the upload itself.',
     tag: 'Media Streaming',
-    Component: demo({
-      command: 'transcode asynchronously',
-      before: [{ label: 'upload blocks until transcoding to all resolutions finishes', sub: 'user waits minutes staring at a spinner', color: 'var(--bad)' }],
-      after: [{ label: 'upload returns immediately, transcoding runs as an async job', sub: 'video goes live per-resolution as each finishes', color: 'var(--good)' }],
-      note: {
-        before: 'Transcoding a video into 5 resolutions takes real time — making the uploader wait for all of it synchronously is a terrible experience.',
-        after: 'The upload just stores the raw file and returns success — a background pipeline transcodes each resolution independently, watchable as soon as the first is ready.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace an upload',
+      intro: 'Click to trace a video from upload to playback.',
+      nodes: [
+        { id: 'uploader', label: 'Uploader', layer: 0 },
+        { id: 'uploadapi', label: 'Upload API', layer: 1 },
+        { id: 'rawstorage', label: 'Raw Storage', layer: 2 },
+        { id: 'transcodequeue', label: 'Transcode Queue', layer: 2 },
+        { id: 'workers', label: 'Transcode Workers', sub: '1080p / 720p / 480p / 360p', layer: 3 },
+        { id: 'cdn', label: 'CDN', layer: 4 },
+        { id: 'viewer', label: 'Viewer', layer: 5 },
+      ],
+      edges: [
+        { from: 'uploader', to: 'uploadapi' },
+        { from: 'uploadapi', to: 'rawstorage' },
+        { from: 'uploadapi', to: 'transcodequeue' },
+        { from: 'transcodequeue', to: 'workers' },
+        { from: 'workers', to: 'cdn' },
+        { from: 'cdn', to: 'viewer' },
+      ],
+      steps: ['uploader', 'uploadapi', 'rawstorage', 'transcodequeue', 'workers', 'cdn', 'viewer'],
+      captions: [
+        'The uploader sends a raw video file.',
+        'The Upload API stores it and returns success immediately.',
+        'The raw file lands in object storage — the upload itself is already done.',
+        'A transcode job is enqueued in the background, not run synchronously.',
+        'Workers transcode each resolution independently and publish it as soon as it finishes.',
+        'Finished segments push to the CDN edge.',
+        'The viewer streams from the CDN — origin storage is never hit per-viewer.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `on upload(video_file):\n  raw_url = store_in_object_storage(video_file)\n  video = create(status="processing", raw_url=raw_url)\n  enqueue_transcode_job(video.id)  # returns immediately, doesn't block the upload\n\non transcode_job(video_id):\n  for resolution in [1080p, 720p, 480p, 360p]:\n    transcoded = transcode(video.raw_url, resolution)\n    store_and_publish(transcoded)  # each resolution goes live independently as it finishes` }],
     realWorld:
@@ -177,14 +307,30 @@ export const caseStudiesConcepts = [
     title: 'Design Netflix',
     blurb: 'Video streaming plus personalized recommendations — distinct from YouTube in that content is curated/licensed (not user-uploaded) and personalization is a first-class part of the product.',
     tag: 'Media Streaming',
-    Component: demo({
-      command: 'personalize the ranking',
-      before: [{ label: 'same homepage row order for every user', sub: 'no personalization — a one-size-fits-all catalog', color: 'var(--bad)' }],
-      after: [{ label: 'per-user ranking model scores every row/title', sub: 'homepage assembled from precomputed personalized rankings', color: 'var(--good)' }],
-      note: {
-        before: 'Every user seeing the identical homepage wastes the single biggest lever a streaming service has for engagement.',
-        after: 'A recommendation model scores content per user, and the homepage is assembled from those personalized rankings — computed in advance, not live on every page load.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace a homepage load',
+      intro: 'Click to trace how a personalized homepage gets built.',
+      nodes: [
+        { id: 'watchhistory', label: 'Watch History', layer: 0 },
+        { id: 'recpipeline', label: 'Batch Ranking Pipeline', sub: 'runs offline, periodically', layer: 1 },
+        { id: 'reccache', label: 'Recommendation Cache', sub: 'precomputed per user', layer: 2 },
+        { id: 'viewer', label: 'Viewer', sub: 'opens the app', layer: 3 },
+        { id: 'homepage', label: 'Homepage Service', layer: 4 },
+      ],
+      edges: [
+        { from: 'watchhistory', to: 'recpipeline' },
+        { from: 'recpipeline', to: 'reccache' },
+        { from: 'viewer', to: 'homepage' },
+        { from: 'homepage', to: 'reccache' },
+      ],
+      steps: ['watchhistory', 'recpipeline', 'reccache', 'viewer', 'homepage'],
+      captions: [
+        'Every watch, in the background, accumulates in watch history.',
+        'A batch ranking pipeline processes it periodically — not on any single request.',
+        "The resulting per-user scores land in a recommendation cache, ready ahead of time.",
+        'Later, the viewer opens the app.',
+        'The Homepage Service just reads the precomputed cache — no live model inference on the request path.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `WatchHistory: { user_id, title_id, watched_pct, watched_at }\nRecommendationScore: { user_id, title_id, score }  # precomputed offline, refreshed periodically\n\non load_homepage(user):\n  rows = ["Continue Watching", "Because you watched X", "Trending", ...]\n  for row in rows:\n    row.titles = top_scored_titles(user, row.category)  # from precomputed RecommendationScore` }],
     realWorld:
@@ -200,14 +346,30 @@ export const caseStudiesConcepts = [
     title: 'Design Ticketmaster',
     blurb: 'Selling a fixed number of seats to a huge simultaneous audience — the defining challenge is preventing the same seat from being sold twice under extreme concurrent demand.',
     tag: 'Commerce & Booking',
-    Component: demo({
-      command: 'prevent double-booking',
-      before: [{ label: 'check seat availability, then book it (2 separate steps)', sub: 'race condition: 2 users both pass the check before either books', color: 'var(--bad)' }],
-      after: [{ label: "atomic reserve: UPDATE seats SET status='held' WHERE id=? AND status='available'", sub: 'only one of two concurrent requests actually updates a row', color: 'var(--good)' }],
-      note: {
-        before: 'Checking availability and then booking as two separate operations leaves a window where two users can both see "available" before either has actually claimed it.',
-        after: "A single atomic conditional update means exactly one of two simultaneous requests wins — the database's own row-level locking resolves the race.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace two concurrent buyers',
+      intro: 'Click to trace two buyers racing for the same seat.',
+      nodes: [
+        { id: 'buyera', label: 'Buyer A', layer: 0 },
+        { id: 'buyerb', label: 'Buyer B', sub: 'same seat, same instant', layer: 0 },
+        { id: 'bookingapi', label: 'Booking API', layer: 1 },
+        { id: 'seatsdb', label: 'Seats Table', sub: 'atomic compare-and-swap', layer: 2 },
+        { id: 'winner', label: 'Winner', sub: 'seat held', layer: 3 },
+      ],
+      edges: [
+        { from: 'buyera', to: 'bookingapi' },
+        { from: 'buyerb', to: 'bookingapi' },
+        { from: 'bookingapi', to: 'seatsdb' },
+        { from: 'seatsdb', to: 'winner' },
+      ],
+      steps: ['buyera', 'buyerb', 'bookingapi', 'seatsdb', 'winner'],
+      captions: [
+        'Buyer A clicks "Reserve" on seat 14C.',
+        'Buyer B clicks the exact same seat, a few milliseconds later.',
+        'Both requests reach the Booking API almost simultaneously.',
+        "The database's atomic conditional update only lets one of them actually flip the row.",
+        "One buyer wins the seat; the other's identical request affects zero rows and sees it's already gone.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `-- Atomic compare-and-swap: only ONE concurrent request can win this\nUPDATE seats SET status = 'held', held_by = ?, held_until = now() + interval '10 min'\nWHERE id = ? AND status = 'available';\n-- if 0 rows affected: someone else got there first, seat is gone\n\n-- separately: a background job releases 'held' seats whose hold expired\n-- without the user completing checkout in time` }],
     realWorld:
@@ -223,14 +385,33 @@ export const caseStudiesConcepts = [
     title: 'Design a Payment System',
     blurb: 'Processing a charge exactly once, even under network retries — the design revolves around idempotency and an accurate, auditable ledger, not around card-processing logic itself.',
     tag: 'Commerce & Booking',
-    Component: demo({
-      command: 'guarantee exactly-once with a ledger',
-      before: [{ label: 'POST /charge, retried on timeout', sub: 'customer charged twice — no way to tell a retry from a new charge', color: 'var(--bad)' }],
-      after: [{ label: 'POST /charge with Idempotency-Key + append-only ledger', sub: 'retry returns the original result; ledger gives a full auditable history', color: 'var(--good)' }],
-      note: {
-        before: 'A network timeout after the charge actually succeeded leads the client to retry — with no idempotency key, that retry is indistinguishable from a brand-new charge.',
-        after: 'An idempotency key lets a retry return the exact original result, and every state change is recorded as an immutable ledger entry.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace a retried charge',
+      intro: 'Click to trace a charge request that gets retried after a timeout.',
+      nodes: [
+        { id: 'client', label: 'Client', sub: 'retries after a timeout', layer: 0 },
+        { id: 'paymentapi', label: 'Payment API', layer: 1 },
+        { id: 'idcheck', label: 'Idempotency Check', layer: 2 },
+        { id: 'processor', label: 'Payment Processor', layer: 3 },
+        { id: 'ledger', label: 'Append-Only Ledger', layer: 3 },
+        { id: 'response', label: 'Response', sub: 'same result, both times', layer: 4 },
+      ],
+      edges: [
+        { from: 'client', to: 'paymentapi' },
+        { from: 'paymentapi', to: 'idcheck' },
+        { from: 'idcheck', to: 'processor' },
+        { from: 'processor', to: 'ledger' },
+        { from: 'ledger', to: 'response' },
+      ],
+      steps: ['client', 'paymentapi', 'idcheck', 'processor', 'ledger', 'response'],
+      captions: [
+        "The client's first request times out before it sees the response.",
+        'It retries the exact same charge, with the same idempotency key.',
+        'The Payment API checks: has this idempotency key been seen before?',
+        "First time through, it actually delegates the charge to the payment processor.",
+        'The result is recorded as an immutable ledger entry, keyed by that idempotency key.',
+        "On retry, the same key is found — the original result is returned, and the card is never charged twice.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `LedgerEntry: { id, account_id, amount, type (charge/refund/payout), idempotency_key, created_at }\n# append-only — never updated or deleted, only ever added to\n\non charge(amount, idempotency_key):\n  existing = ledger.find_by_idempotency_key(idempotency_key)\n  if existing: return existing.result  # safe retry, no duplicate charge\n\n  result = payment_processor.charge(amount)  # delegate actual card processing\n  ledger.append({ amount, type: "charge", idempotency_key, result })\n  return result` }],
     realWorld:
@@ -246,14 +427,30 @@ export const caseStudiesConcepts = [
     title: 'Design Dropbox',
     blurb: 'Syncing files across devices efficiently — the core trick is chunking files and only transferring the blocks that actually changed, instead of re-uploading the whole file.',
     tag: 'Storage & Sync',
-    Component: demo({
-      command: 'sync only the changed blocks',
-      before: [{ label: 'edit 1 line in a 2GB video file', sub: 'entire 2GB file re-uploaded to sync the change', color: 'var(--bad)' }],
-      after: [{ label: 'file split into 4MB blocks, hashed', sub: 'only the ~1 changed block is re-uploaded', color: 'var(--good)' }],
-      note: {
-        before: 'Re-uploading an entire large file for a tiny edit wastes enormous bandwidth and makes sync painfully slow.',
-        after: "Splitting the file into blocks and hashing each one means only the blocks whose hash actually changed need to be re-uploaded — one 4MB block, not the whole 2GB file.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a sync',
+      intro: 'Click to trace a small edit syncing across devices.',
+      nodes: [
+        { id: 'localfile', label: 'Local File', sub: '1 line edited', layer: 0 },
+        { id: 'chunker', label: 'Chunk & Hash', layer: 1 },
+        { id: 'diff', label: 'Diff Against Remote', layer: 2 },
+        { id: 'blockstore', label: 'Block Store', sub: 'deduplicated', layer: 3 },
+        { id: 'otherdevices', label: 'Other Devices', layer: 4 },
+      ],
+      edges: [
+        { from: 'localfile', to: 'chunker' },
+        { from: 'chunker', to: 'diff' },
+        { from: 'diff', to: 'blockstore' },
+        { from: 'blockstore', to: 'otherdevices' },
+      ],
+      steps: ['localfile', 'chunker', 'diff', 'blockstore', 'otherdevices'],
+      captions: [
+        'A user edits one line in a large file.',
+        'The file is split into fixed-size blocks and each block is hashed.',
+        "Comparing hashes against what's already uploaded finds exactly the one changed block.",
+        'Only that block — not the whole file — is uploaded to the deduplicated block store.',
+        'Other devices pull just that one changed block to stay in sync.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `FileBlock: { hash (SHA-256), data, ref_count }  # content-addressed, deduplicated across ALL users' files\nFileVersion: { file_id, version, block_hashes: [h1, h2, h3, ...] }  # ordered list of block references\n\non sync(local_file):\n  local_blocks = chunk_and_hash(local_file)\n  changed = local_blocks - remote_blocks_already_uploaded\n  upload(changed)  # only the blocks that actually differ\n  update_file_version(file_id, local_blocks)` }],
     realWorld:
@@ -269,14 +466,33 @@ export const caseStudiesConcepts = [
     title: 'Design a URL Shortener',
     blurb: 'Turning a long URL into a short, unique code and redirecting on lookup — deceptively simple, with the real design questions being ID generation and redirect latency at scale.',
     tag: 'Storage & Sync',
-    Component: demo({
-      command: 'generate unique codes at scale',
-      before: [{ label: 'single server, auto-increment counter → base62 encode', sub: "single point of failure, can't scale writes horizontally", color: 'var(--bad)' }],
-      after: [{ label: 'pre-allocated ID ranges per server (or a dedicated ID service)', sub: 'each server generates unique codes independently, no per-request coordination', color: 'var(--good)' }],
-      note: {
-        before: 'A single auto-increment counter is a single point of failure and a write bottleneck — every request has to go through it, serialized.',
-        after: "Each server is handed its own range of ids to allocate from — no cross-server coordination needed per request, similar to Twitter's Snowflake IDs.",
-      },
+    Component: diagram({
+      traceLabel: 'Trace a shorten + redirect',
+      intro: 'Click to trace a URL being shortened, then followed.',
+      nodes: [
+        { id: 'client', label: 'Client', sub: 'shortens a URL', layer: 0 },
+        { id: 'api', label: 'Shortener API', layer: 1 },
+        { id: 'idgen', label: 'Pre-Allocated ID Range', layer: 2 },
+        { id: 'urldb', label: 'URL Mapping Store', layer: 2 },
+        { id: 'cache', label: 'Redirect Cache', layer: 3 },
+        { id: 'browser', label: 'Browser', sub: 'follows the short link', layer: 4 },
+      ],
+      edges: [
+        { from: 'client', to: 'api' },
+        { from: 'api', to: 'idgen' },
+        { from: 'api', to: 'urldb' },
+        { from: 'urldb', to: 'cache' },
+        { from: 'cache', to: 'browser' },
+      ],
+      steps: ['client', 'api', 'idgen', 'urldb', 'cache', 'browser'],
+      captions: [
+        'A client submits a long URL to shorten.',
+        'The Shortener API handles it — with no cross-server coordination needed.',
+        'It pulls the next id from its own pre-allocated range, encodes it, done.',
+        'The mapping is stored — and immediately cached, since it will never change.',
+        'A later redirect hits the cache first, not the database.',
+        "The browser gets an instant 302 — the database only ever sees cache misses and the low-volume write path.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `UrlMapping: { short_code (base62, ~7 chars), long_url, created_at, expires_at }\n\non shorten(long_url):\n  id = next_id_from_my_preallocated_range()  # no cross-server coordination\n  short_code = base62_encode(id)\n  store(short_code, long_url)\n  return short_code\n\non redirect(short_code):\n  long_url = cache.get(short_code) ?? db.get(short_code)  # cache-first, hot path\n  return HTTP_302(long_url)` }],
     realWorld:
@@ -292,14 +508,34 @@ export const caseStudiesConcepts = [
     title: 'Design a Web Crawler',
     blurb: 'Systematically discovering and downloading web pages at scale — the hard parts are avoiding re-crawling the same URL forever and respecting per-domain politeness limits.',
     tag: 'Search & Discovery',
-    Component: demo({
-      command: 'dedupe and rate-limit per domain',
-      before: [{ label: 'crawl every discovered URL immediately, no dedup', sub: 'same page crawled repeatedly; one domain gets hammered, gets you blocked', color: 'var(--bad)' }],
-      after: [{ label: 'Bloom filter for seen URLs + per-domain rate-limited queue', sub: 'never re-crawls the same URL, spreads load politely across domains', color: 'var(--good)' }],
-      note: {
-        before: "Without deduplication, the crawler wastes enormous effort re-downloading pages it's already seen — and without pacing, a site can rate-limit or block it entirely.",
-        after: 'A Bloom filter cheaply checks "have I seen this URL before?" without storing every URL in full, and a per-domain queue ensures no single site gets hammered.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace a crawl',
+      intro: 'Click to trace one URL through discovery, crawling, and link extraction.',
+      nodes: [
+        { id: 'seed', label: 'Seed URLs', layer: 0 },
+        { id: 'dedup', label: 'Bloom Filter Dedup', layer: 1 },
+        { id: 'domainqueues', label: 'Per-Domain Queues', sub: 'rate-limited', layer: 2 },
+        { id: 'workers', label: 'Crawl Workers', layer: 3 },
+        { id: 'pagestore', label: 'Page Store', layer: 4 },
+        { id: 'linkextractor', label: 'Link Extractor', layer: 4 },
+      ],
+      edges: [
+        { from: 'seed', to: 'dedup' },
+        { from: 'dedup', to: 'domainqueues' },
+        { from: 'domainqueues', to: 'workers' },
+        { from: 'workers', to: 'pagestore' },
+        { from: 'workers', to: 'linkextractor' },
+        { from: 'linkextractor', to: 'dedup' },
+      ],
+      steps: ['seed', 'dedup', 'domainqueues', 'workers', 'pagestore', 'linkextractor'],
+      captions: [
+        'A URL starts as a seed (or is discovered on a crawled page).',
+        "The Bloom filter cheaply checks: has this exact URL been crawled before?",
+        "New URLs land in a queue specific to their domain, respecting that domain's rate limit.",
+        'A crawl worker fetches the page once the domain allows it.',
+        'The page content is saved to the page store.',
+        "Its links are extracted and fed straight back into the dedup filter — new ones enter the queue, seen ones are dropped.",
+      ],
     }),
     code: [{ lang: 'text', snippet: `seen_urls: BloomFilter  # cheap, approximate "have I crawled this?" check\n\non discover_url(url):\n  if not seen_urls.might_contain(url):\n    seen_urls.add(url)\n    domain_queue[domain_of(url)].enqueue(url)  # separate queue per domain\n\non crawl_worker():\n  for domain in active_domains:\n    if domain.can_crawl_now():  # respects per-domain rate limit + robots.txt crawl-delay\n      url = domain_queue[domain].dequeue()\n      page = fetch(url)\n      extract_and_discover_links(page)` }],
     realWorld:
@@ -315,14 +551,33 @@ export const caseStudiesConcepts = [
     title: 'Design Autocomplete / Typeahead Search',
     blurb: 'Suggesting completions as a user types — needs sub-100ms responses on every keystroke, which rules out querying a general-purpose database and calls for a purpose-built prefix index.',
     tag: 'Search & Discovery',
-    Component: demo({
-      command: 'index by prefix',
-      before: [{ label: "SELECT * FROM queries WHERE text LIKE 'user_input%' ORDER BY frequency", sub: 'a scan gets slower as the table grows — too slow for every keystroke', color: 'var(--bad)' }],
-      after: [{ label: 'trie (prefix tree) held in memory, top-k cached per node', sub: 'O(prefix length) lookup, independent of how many total queries exist', color: 'var(--good)' }],
-      note: {
-        before: "A LIKE 'prefix%' query is fundamentally a scan-and-filter operation whose cost scales with data size — not fast enough for a suggestion fired on every keystroke.",
-        after: 'A trie walks exactly as many nodes as the prefix is long, completely independent of total dataset size — and each node caches its own top-k most frequent completions.',
-      },
+    Component: diagram({
+      traceLabel: 'Trace a keystroke',
+      intro: 'Click to trace what happens on every keystroke.',
+      nodes: [
+        { id: 'querylogs', label: 'Query Logs', layer: 0 },
+        { id: 'rebuild', label: 'Periodic Trie Rebuild', layer: 1 },
+        { id: 'user', label: 'User', sub: 'types "sea..."', layer: 2 },
+        { id: 'trie', label: 'Trie Lookup', sub: 'in-memory', layer: 3 },
+        { id: 'topk', label: 'Cached Top-K', sub: 'per node', layer: 4 },
+        { id: 'suggestions', label: 'Suggestions Shown', layer: 5 },
+      ],
+      edges: [
+        { from: 'querylogs', to: 'rebuild' },
+        { from: 'rebuild', to: 'trie' },
+        { from: 'user', to: 'trie' },
+        { from: 'trie', to: 'topk' },
+        { from: 'topk', to: 'suggestions' },
+      ],
+      steps: ['querylogs', 'rebuild', 'user', 'trie', 'topk', 'suggestions'],
+      captions: [
+        'In the background, every search query gets logged.',
+        'Periodically (not per-keystroke), the trie is rebuilt from aggregated query frequency.',
+        'Later, a user types a prefix.',
+        "The lookup walks the trie one character at a time — O(prefix length), not O(dataset size).",
+        "Each node it reaches already has its top-k most frequent completions cached.",
+        'Those suggestions are shown instantly — well under 100ms.',
+      ],
     }),
     code: [{ lang: 'text', snippet: `TrieNode: { children: {char: TrieNode}, top_k_completions: [(query, frequency), ...] }\n\non type(prefix):\n  node = trie.root\n  for char in prefix:\n    node = node.children[char]  # O(prefix length), not O(dataset size)\n  return node.top_k_completions  # precomputed and cached at each node\n\n# updated periodically (not on every keystroke) as query frequency data changes\non rebuild_trie():\n  for query, frequency in top_queries_by_volume():\n    trie.insert(query, frequency)` }],
     realWorld:
