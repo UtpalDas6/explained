@@ -12,10 +12,11 @@ import { cloudConcepts } from './data/cloudConcepts.js'
 import { testingConcepts } from './data/testingConcepts.js'
 import { eventDrivenConcepts } from './data/eventDrivenConcepts.js'
 import { distributedConcepts } from './data/distributedConcepts.js'
+import { caseStudiesConcepts } from './data/caseStudiesConcepts.js'
 import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
-const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts, ...gitConcepts, ...apiConcepts, ...dbConcepts, ...aiConcepts, ...cloudConcepts, ...testingConcepts, ...eventDrivenConcepts, ...distributedConcepts]
+const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts, ...gitConcepts, ...apiConcepts, ...dbConcepts, ...aiConcepts, ...cloudConcepts, ...testingConcepts, ...eventDrivenConcepts, ...distributedConcepts, ...caseStudiesConcepts]
 
 const MODES = {
   systems: { label: 'Systems', brand: '/systems', heading: 'System design, visualized', sub: 'Pick a concept to see it move.' },
@@ -30,6 +31,7 @@ const MODES = {
   testing: { label: 'Testing', brand: '/testing', heading: 'Software testing, visualized', sub: 'From unit tests to chaos engineering — pick a topic to see it compared.' },
   events: { label: 'Event-Driven Systems', brand: '/events', heading: 'Event-driven systems, visualized', sub: 'From pub/sub and event sourcing to sagas and stream processing — pick a topic to see it compared.' },
   distributed: { label: 'Distributed Systems', brand: '/distributed', heading: 'Distributed systems theory, visualized', sub: 'From consensus and clocks to CRDTs and the FLP theorem — pick a topic to see it compared.' },
+  cases: { label: 'Case Studies', brand: '/cases', heading: 'System design case studies, visualized', sub: 'Design Twitter, YouTube, Uber, and more — pick a system to see the naive design, then the fix that scales it.' },
 }
 
 // A single code entry ({ lang, snippet }) renders one block as before; an
