@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { Box, Arrow, Stage, Note } from '../patterns/shared.jsx'
 import { playClick } from '../../lib/sound.js'
 
-// Generic before/after visualizer shared by every git command — a command
-// is fundamentally a state transition (working dir / staging / repo / remote
-// / stash all reduce to "labeled boxes with a color"), so one component with
-// data-driven `before`/`after` box arrays covers all of them instead of a
-// bespoke animation per command.
-export default function GitDemo({ command, before, after, note }) {
+// Generic before/after visualizer, shared across sections. A git command,
+// an API design fix, anything reducible to "labeled boxes in one state,
+// then another" reuses this instead of a bespoke animation each — the
+// `demo()` factories in the data files just supply the box arrays.
+export default function StateDemo({ command, before, after, note }) {
   const [ran, setRan] = useState(false)
   const state = ran ? after : before
 
@@ -20,7 +19,7 @@ export default function GitDemo({ command, before, after, note }) {
     <div className="panel">
       <div className="controls">
         <button className="btn primary" onClick={run}>
-          <span className="mono">{ran ? '↺ reset' : `$ ${command}`}</span>
+          <span className="mono">{ran ? '↺ undo' : command}</span>
         </button>
       </div>
       <Stage row>

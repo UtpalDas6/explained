@@ -1,12 +1,12 @@
 import { createElement } from 'react'
-import GitDemo from '../concepts/git/GitDemo.jsx'
+import StateDemo from '../concepts/shared/StateDemo.jsx'
 
 // Registry for the /git section. Every git command is fundamentally a state
 // transition (working dir / staging / repo / remote / stash), so one
-// data-driven GitDemo component covers all of them — `demo()` just wires a
+// data-driven StateDemo component covers all of them — `demo()` just wires a
 // command + before/after box states into a Component with no props, the
 // shape App.jsx expects.
-const demo = (props) => () => createElement(GitDemo, props)
+const demo = (props) => () => createElement(StateDemo, props)
 
 export const gitConcepts = [
   {
