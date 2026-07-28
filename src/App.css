@@ -88,30 +88,23 @@
   color: var(--accent);
 }
 
-.mode-toggle {
-  display: flex;
-  gap: 4px;
+.mode-select {
+  font-family: inherit;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 3px;
-  margin: 0 0 10px;
-}
-
-.mode-btn {
-  flex: 1;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-dim);
-  font-size: 12px;
-  padding: 7px 0;
-  transition: background 0.15s, color 0.15s;
-}
-
-.mode-btn.active {
-  background: var(--panel);
   color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.mode-select:focus {
+  border-color: var(--accent);
 }
 
 .sidebar-search {
