@@ -3,15 +3,17 @@ import { motion } from 'framer-motion'
 import { concepts } from './data/concepts.js'
 import { dsaConcepts } from './data/dsaConcepts.js'
 import { patternsConcepts } from './data/patternsConcepts.js'
+import { solidConcepts } from './data/solidConcepts.js'
 import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
-const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts]
+const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts]
 
 const MODES = {
   systems: { brand: '/systems', heading: 'System design, visualized', sub: 'Pick a concept to see it move.' },
   dsa: { brand: '/ds_algo', heading: 'Data structures & algorithms, visualized', sub: 'Pick a concept, step through it, then go solve it on LeetCode.' },
   patterns: { brand: '/patterns', heading: 'Design patterns, visualized', sub: 'Pick a pattern to see it move, then see where it shows up in real code.' },
+  solid: { brand: '/solid', heading: 'SOLID principles, visualized', sub: 'Pick a principle to see the violation, then see it fixed.' },
 }
 
 // A single code entry ({ lang, snippet }) renders one block as before; an
@@ -182,6 +184,7 @@ function App() {
           <button className={`mode-btn ${mode === 'systems' ? 'active' : ''}`} onClick={() => switchMode('systems')}>Systems</button>
           <button className={`mode-btn ${mode === 'dsa' ? 'active' : ''}`} onClick={() => switchMode('dsa')}>DS & Algo</button>
           <button className={`mode-btn ${mode === 'patterns' ? 'active' : ''}`} onClick={() => switchMode('patterns')}>Patterns</button>
+          <button className={`mode-btn ${mode === 'solid' ? 'active' : ''}`} onClick={() => switchMode('solid')}>SOLID</button>
         </div>
         <input
           className="sidebar-search"
