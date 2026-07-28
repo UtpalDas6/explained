@@ -388,6 +388,11 @@
     padding: 20px 16px;
   }
 
+  .mode-select {
+    padding: 12px 10px;
+    font-size: 15px;
+  }
+
   .concept-header h2 {
     font-size: 19px;
   }
