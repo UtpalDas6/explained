@@ -4,16 +4,18 @@ import { concepts } from './data/concepts.js'
 import { dsaConcepts } from './data/dsaConcepts.js'
 import { patternsConcepts } from './data/patternsConcepts.js'
 import { solidConcepts } from './data/solidConcepts.js'
+import { gitConcepts } from './data/gitConcepts.js'
 import { isSoundEnabled, setSoundEnabled } from './lib/sound.js'
 import './App.css'
 
-const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts]
+const allConcepts = [...concepts.map((c) => ({ ...c, section: c.section ?? 'systems' })), ...dsaConcepts, ...patternsConcepts, ...solidConcepts, ...gitConcepts]
 
 const MODES = {
   systems: { label: 'Systems', brand: '/systems', heading: 'System design, visualized', sub: 'Pick a concept to see it move.' },
   dsa: { label: 'DS & Algo', brand: '/ds_algo', heading: 'Data structures & algorithms, visualized', sub: 'Pick a concept, step through it, then go solve it on LeetCode.' },
   patterns: { label: 'Patterns', brand: '/patterns', heading: 'Design patterns, visualized', sub: 'Pick a pattern to see it move, then see where it shows up in real code.' },
   solid: { label: 'SOLID', brand: '/solid', heading: 'SOLID principles, visualized', sub: 'Pick a principle to see the violation, then see it fixed.' },
+  git: { label: 'Git Commands', brand: '/git', heading: 'Git commands, visualized', sub: 'Pick a command to see what it does to the repo before and after.' },
 }
 
 // A single code entry ({ lang, snippet }) renders one block as before; an
