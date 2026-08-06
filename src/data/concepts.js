@@ -302,6 +302,7 @@ X-Cache: HIT`,
     blurb: 'A producer and consumer talk through a FIFO queue instead of directly.',
     tag: 'three.js',
     Component: MessageQueue,
+    youtubeId: 'WJbP0apHdrw',
     code: [
       {
         lang: 'js',
@@ -424,6 +425,7 @@ location /api/ {
     blurb: 'Repeated failures trip the breaker open, failing fast until a trial request succeeds again.',
     tag: 'state machine',
     Component: CircuitBreaker,
+    youtubeId: '91aLUfHS56Q',
     code: [
       {
         lang: 'js',
@@ -463,6 +465,7 @@ except pybreaker.CircuitBreakerError:
     blurb: 'A compact bit array that can say "definitely not present" or "maybe present" — never a false negative.',
     tag: 'hashing',
     Component: BloomFilter,
+    youtubeId: 'Vxdcj2Gu9AM',
     code: [
       {
         lang: 'js',
