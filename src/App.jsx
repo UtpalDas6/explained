@@ -252,6 +252,12 @@ function App() {
             <active.Component />
             {active.code && <CodeBlock code={active.code} />}
             {active.leetcode && <LeetCodeList problems={active.leetcode} />}
+            {active.video && (
+              <div className="info-section">
+                <h3>Watch it explained</h3>
+                <video className="concept-video" src={active.video} controls preload="metadata" />
+              </div>
+            )}
             {active.realWorld && (
               <div className="info-section">
                 <h3>Where this shows up</h3>

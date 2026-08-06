@@ -236,6 +236,13 @@
   line-height: 1.6;
 }
 
+.concept-video {
+  width: 100%;
+  max-width: 640px;
+  border-radius: 10px;
+  display: block;
+}
+
 .info-section-header {
   display: flex;
   align-items: center;
