@@ -252,10 +252,16 @@ function App() {
             <active.Component />
             {active.code && <CodeBlock code={active.code} />}
             {active.leetcode && <LeetCodeList problems={active.leetcode} />}
-            {active.video && (
+            {active.youtubeId && (
               <div className="info-section">
                 <h3>Watch it explained</h3>
-                <video className="concept-video" src={active.video} controls preload="metadata" />
+                <iframe
+                  className="concept-video"
+                  src={`https://www.youtube.com/embed/${active.youtubeId}`}
+                  title={`${active.title} explained`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
               </div>
             )}
             {active.realWorld && (

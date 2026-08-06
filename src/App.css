@@ -238,7 +238,9 @@
 
 .concept-video {
   width: 100%;
-  max-width: 640px;
+  max-width: 360px;
+  aspect-ratio: 9 / 16;
+  border: 0;
   border-radius: 10px;
   display: block;
 }

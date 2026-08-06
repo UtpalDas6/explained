@@ -39,7 +39,7 @@ export const concepts = [
     blurb: 'Requests check a fast cache before hitting the slow database.',
     tag: 'gsap + anime.js',
     Component: Caching,
-    video: '/videos/caching.mp4',
+    youtubeId: 'nXYs7WS5Ez8',
     code: [
       {
         lang: 'js',
@@ -79,7 +79,7 @@ async def get_user(id):
     blurb: 'Data is split across nodes by a hash of its key.',
     tag: 'three.js',
     Component: Sharding,
-    video: '/videos/sharding.mp4',
+    youtubeId: '92z3SUcNgb8',
     code: [
       {
         lang: 'js',
@@ -118,7 +118,7 @@ await pool.fetch('SELECT * FROM orders WHERE user_id = $1', user_id)`,
     blurb: 'Writes on a primary propagate to replicas, sync or async.',
     tag: 'three.js',
     Component: Replication,
-    video: '/videos/replication.mp4',
+    youtubeId: 'UZqZy05Z8pY',
     code: [
       {
         lang: 'js',
@@ -160,7 +160,7 @@ async def create_post(post: PostIn):
     blurb: 'Keys walk a ring to their node — adding/removing nodes remaps only a slice.',
     tag: 'gsap',
     Component: ConsistentHashing,
-    video: '/videos/consistent-hashing.mp4',
+    youtubeId: 'C7tnEewba1I',
     code: [
       {
         lang: 'js',
@@ -203,7 +203,7 @@ async def create_post(post: PostIn):
     blurb: 'Rows are split across tables by an ordered key range, same schema everywhere.',
     tag: 'three.js',
     Component: HorizontalPartitioning,
-    video: '/videos/horizontal-partitioning.mp4',
+    youtubeId: 'WauNLW96DWg',
     code: {
       lang: 'sql',
       snippet: `-- Native range partitioning in Postgres
