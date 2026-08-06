@@ -401,6 +401,7 @@ if count > 100:
     blurb: 'A forward proxy hides the client; a reverse proxy hides the server.',
     tag: 'gsap',
     Component: ProxyVsReverseProxy,
+    youtubeId: 'k1J9Gqa-Cz0',
     code: {
       lang: 'nginx',
       snippet: `# Reverse proxy: client only ever talks to nginx,
@@ -575,6 +576,7 @@ CREATE INDEX idx_orders_user_id ON orders (user_id);
     blurb: 'Three ways a client stays updated, from repeated round trips to one open connection.',
     tag: 'gsap',
     Component: WebSocketVsPollingVsSse,
+    youtubeId: 'nyu4i0rbHrw',
     code: [
       {
         lang: 'js',
@@ -610,6 +612,7 @@ async def events():
     blurb: 'One entry point routes by path to different services and enforces auth/rate-limits centrally.',
     tag: 'three.js',
     Component: ApiGateway,
+    youtubeId: '7Swbm9qRmTs',
     code: {
       lang: 'yaml',
       snippet: `# Kong route configuration
@@ -732,6 +735,7 @@ example.com.  300  IN  A  93.184.216.34   ; TTL = 300s`,
     blurb: 'One writer never conflicts; two writers scale writes but can disagree before they sync.',
     tag: 'state machine',
     Component: MasterReplicationTopology,
+    youtubeId: 'Ot7qFGjay8g',
     code: {
       lang: 'sql',
       snippet: `-- MySQL multi-primary needs offset auto_increment to avoid PK collisions
