@@ -227,6 +227,7 @@ CREATE TABLE orders_2024 PARTITION OF orders
     blurb: 'Columns are split into separate tables by access pattern, joined by a key.',
     tag: 'framer-motion',
     Component: VerticalPartitioning,
+    youtubeId: 'a9zgQrTvU8g',
     code: {
       lang: 'sql',
       snippet: `-- Split a wide, frequently-scanned users table
@@ -277,6 +278,7 @@ server {
     blurb: 'Edge nodes cache content close to users; only the first request per edge hits the distant origin.',
     tag: 'three.js',
     Component: Cdn,
+    youtubeId: '3qGMjqMk_FA',
     code: {
       lang: 'http',
       snippet: `GET /app.css HTTP/1.1
@@ -340,6 +342,7 @@ channel.basic_consume(queue='emails', on_message_callback=on_message)`,
     blurb: 'During a network partition you must choose: reject writes (CP) or risk divergence (AP).',
     tag: 'gsap',
     Component: CapTheorem,
+    youtubeId: 'sPRRNpg8n8g',
     code: [
       {
         lang: 'js',
