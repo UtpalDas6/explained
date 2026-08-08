@@ -499,6 +499,7 @@ if email not in bf:
     blurb: 'Snowflake IDs pack a timestamp, machine id, and sequence into one sortable 64-bit number.',
     tag: 'bit-packing',
     Component: SnowflakeId,
+    youtubeId: '2BQL_Dj4N-g',
     code: [
       {
         lang: 'js',
@@ -524,6 +525,7 @@ id = generator.next_id()  # e.g. 7123456789012345 — sortable by creation time`
     blurb: 'Only one client holds the lock at a time; others queue until it is released.',
     tag: 'mutex',
     Component: DistributedLock,
+    youtubeId: '96iiKRBX3eg',
     code: [
       {
         lang: 'js',
@@ -558,6 +560,7 @@ finally:
     blurb: 'B-Trees optimize for fast reads; LSM-Trees optimize for fast, append-only writes.',
     tag: 'trees',
     Component: DatabaseIndexing,
+    youtubeId: 'BkwgzVN7lOc',
     code: {
       lang: 'sql',
       snippet: `-- Postgres/MySQL: B-Tree by default
