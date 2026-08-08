@@ -12,6 +12,7 @@ export const aiConcepts = [
     id: 'llm',
     section: 'ai',
     title: 'LLM (Large Language Model)',
+    youtubeId: 'RHMVSCm7xqc',
     blurb: 'A model trained on massive text corpora to predict the next token — scale (parameters, data, compute) is what makes it broadly capable.',
     tag: 'Language Models',
     Component: demo({
@@ -38,6 +39,7 @@ export const aiConcepts = [
     id: 'slm',
     section: 'ai',
     title: 'SLM (Small Language Model)',
+    youtubeId: 'Zq-jakkCD4Q',
     blurb: 'A deliberately smaller model — often distilled from a larger one — trading some general capability for speed, cost, and the ability to run on-device.',
     tag: 'Language Models',
     Component: demo({
@@ -64,6 +66,7 @@ export const aiConcepts = [
     id: 'context-window',
     section: 'ai',
     title: 'Context Window',
+    youtubeId: '0N00bc3afvE',
     blurb: 'The maximum number of tokens (input + output combined) a model can attend to in a single call — everything outside it is invisible to the model.',
     tag: 'Language Models',
     Component: demo({
@@ -90,6 +93,7 @@ export const aiConcepts = [
     id: 'tokenization',
     section: 'ai',
     title: 'Tokens & Tokenization',
+    youtubeId: '6b2_QS6IjTU',
     blurb: 'Text is split into sub-word tokens before a model ever sees it — the unit everything (context limits, pricing, output) is actually measured in.',
     tag: 'Language Models',
     Component: demo({
@@ -116,6 +120,7 @@ export const aiConcepts = [
     id: 'fine-tuning-vs-prompting',
     section: 'ai',
     title: 'Fine-Tuning vs Prompting',
+    youtubeId: 'mhe18jFzg30',
     blurb: "Prompting adapts a frozen model's behavior at inference time; fine-tuning actually updates its weights on your own examples.",
     tag: 'Language Models',
     Component: demo({
@@ -168,6 +173,7 @@ export const aiConcepts = [
     id: 'embeddings',
     section: 'ai',
     title: 'Embeddings',
+    youtubeId: 'brMkktXReaQ',
     blurb: 'A dense numerical vector that represents the meaning of text (or an image), positioned so that semantically similar inputs land near each other.',
     tag: 'Vectors & Retrieval',
     Component: demo({
@@ -194,6 +200,7 @@ export const aiConcepts = [
     id: 'vector-database',
     section: 'ai',
     title: 'Vector Database',
+    youtubeId: 'kWJ1XWhLIOA',
     blurb: 'A database purpose-built to store embeddings and answer "find the most similar vectors to this one" queries at scale.',
     tag: 'Vectors & Retrieval',
     Component: demo({
@@ -220,6 +227,7 @@ export const aiConcepts = [
     id: 'ann-search',
     section: 'ai',
     title: 'Approximate Nearest Neighbor (ANN) Search',
+    youtubeId: '3DmC96ulwkI',
     blurb: 'The algorithms (HNSW, IVF) vector databases use to find *approximately* the closest vectors fast, instead of the exact closest ones slowly.',
     tag: 'Vectors & Retrieval',
     Component: demo({
@@ -246,6 +254,7 @@ export const aiConcepts = [
     id: 'chunking-strategy',
     section: 'ai',
     title: 'Chunking Strategy',
+    youtubeId: '7u0Mc4BX_wA',
     blurb: "Splitting long documents into smaller pieces before embedding them — chunk size and boundaries directly determine what retrieval can and can't find.",
     tag: 'Vectors & Retrieval',
     Component: demo({
@@ -272,6 +281,7 @@ export const aiConcepts = [
     id: 'hybrid-search',
     section: 'ai',
     title: 'Hybrid Search',
+    youtubeId: 'OWUCjdJYX5M',
     blurb: 'Combining keyword (lexical/BM25) search with vector (semantic) search — catching both exact term matches and conceptual matches neither alone would find.',
     tag: 'Vectors & Retrieval',
     Component: demo({
@@ -298,6 +308,7 @@ export const aiConcepts = [
     id: 'rag',
     section: 'ai',
     title: 'RAG (Retrieval-Augmented Generation)',
+    youtubeId: '57Quz_qRV2E',
     blurb: 'Retrieves relevant documents at query time and feeds them into the prompt, so the model answers from real source material instead of memory alone.',
     tag: 'RAG',
     Component: demo({
