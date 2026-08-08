@@ -881,6 +881,7 @@ flush_queue.append({'key': key, 'value': value})`,
     blurb: 'A worker pool drains a bounded queue; once it is full, new submissions are rejected outright.',
     tag: 'three.js',
     Component: TaskQueueBackPressure,
+    youtubeId: 'aweKsm7ziVE',
     code: [
       {
         lang: 'js',
