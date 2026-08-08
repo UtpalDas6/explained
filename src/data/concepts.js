@@ -642,6 +642,7 @@ routes:
     blurb: 'Weak, eventual, and strong consistency differ in whether a read right after a write sees it.',
     tag: 'gsap',
     Component: ConsistencyPatterns,
+    youtubeId: 'jeaK8rFb6kQ',
     code: [
       {
         lang: 'js',
@@ -721,6 +722,7 @@ cur.execute('SELECT * FROM orders WHERE id = %s', (id,))`,
     blurb: 'A resolver walks root → TLD → authoritative servers, then caches the answer until its TTL expires.',
     tag: 'gsap',
     Component: DnsResolution,
+    youtubeId: 'sey4veeT3SE',
     code: {
       lang: 'bash',
       snippet: `$ dig example.com
@@ -761,6 +763,7 @@ SET GLOBAL auto_increment_offset = 1; -- node 1: 1,3,5…  node 2: 2,4,6…`,
     blurb: 'Splitting one database into several by function trades cross-table joins for independent scaling.',
     tag: 'framer-motion',
     Component: Federation,
+    youtubeId: '1YFhWjepWfo',
     code: [
       {
         lang: 'js',
@@ -790,6 +793,7 @@ return {**user, 'orders': orders}`,
     blurb: 'Duplicating data trades a slower join for a single fast lookup — and N writes instead of one.',
     tag: 'tradeoff',
     Component: Denormalization,
+    youtubeId: 'r08KV3TUBTA',
     code: {
       lang: 'sql',
       snippet: `-- Denormalized: the order row carries a copy of the customer's name,
@@ -809,6 +813,7 @@ ALTER TABLE orders ADD COLUMN customer_name text;`,
     blurb: 'The same record shaped four ways: key-value, document, wide-column, and graph.',
     tag: 'compare',
     Component: NoSqlDataModels,
+    youtubeId: 'UDNrMHDbssU',
     code: [
       {
         lang: 'js',
@@ -840,6 +845,7 @@ await redis.set('user:1', json.dumps({'name': 'Ada'}))`,
     blurb: 'Cache-aside, write-through, write-behind, and refresh-ahead move data between cache and DB differently.',
     tag: 'gsap',
     Component: CacheWriteStrategies,
+    youtubeId: 'JzEzwlDtknY',
     code: [
       {
         lang: 'js',
